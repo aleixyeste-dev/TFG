@@ -91,13 +91,11 @@ def siguiente_ronda(estado, estructura, agrupaciones=None):
 
     proyectos_disponibles = list(estructura.keys())
 
-    # Asignación de proyectos en la primera ronda
-    if estado["ronda"] == 1:
+    # Garantizar proyectos asignados
+    if estado.get("proyectos") is None:
         p1 = random.choice(proyectos_disponibles)
         p2 = EMPAREJAMIENTOS.get(p1, random.choice(proyectos_disponibles))
         estado["proyectos"] = {1: p1, 2: p2}
-        eventos.append(f"Proyecto equipo 1: {p1}")
-        eventos.append(f"Proyecto equipo 2: {p2}")
 
     # Reparto de actividades
     for equipo, proyecto in estado["proyectos"].items():
@@ -106,12 +104,17 @@ def siguiente_ronda(estado, estructura, agrupaciones=None):
             if a not in estado["historial"]
         ]
 
-        if disponibles:
-            robadas = random.sample(disponibles, min(16, len(disponibles)))
-            estado["historial"].extend(robadas)
-            estado["mazos"].setdefault(equipo, [])
-            estado["mazos"][equipo].extend(robadas)
-            eventos.append(f"Equipo {equipo} roba {len(robadas)} actividades")
+        # Si no quedan actividades nuevas, permitir reutilizar
+        if not disponibles:
+            disponibles = estructura[proyecto]["actividades"].copy()
+
+        robadas = random.sample(disponibles, min(16, len(disponibles)))
+        estado["historial"].extend(robadas)
+
+        estado["mazos"].setdefault(equipo, [])
+        estado["mazos"][equipo].extend(robadas)
+
+        eventos.append(f"Equipo {equipo} roba {len(robadas)} cartas")
 
     estado["ronda"] += 1
     return estado, eventos
