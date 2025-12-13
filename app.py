@@ -64,14 +64,15 @@ col1, col2 = st.columns(2)
 
 def mostrar_equipo(col, equipo):
     col.subheader(f"Equipo {equipo}")
-    mazo = estado.get("mazos", {}).get(equipo, [])
+
+    mazo = estado.get("mazos", {}).get(str(equipo), [])
 
     if not mazo:
         col.info("Sin cartas todavía")
         return
 
     cols = col.columns(4)
-    for i, carta in enumerate(azo := mazo):
+    for i, carta in enumerate(mazo):
         with cols[i % 4]:
             st.image(carta, width=160)
 
