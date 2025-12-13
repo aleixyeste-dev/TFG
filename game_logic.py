@@ -5,7 +5,7 @@ import random
 # ==============================
 # CONFIGURACIÓN
 # ==============================
-BASE_PATH = os.path.join("imagenes", "Proyectos")
+BASE_PATH = os.path.join(os.path.dirname(__file__), "imagenes", "Proyectos")
 
 EMPAREJAMIENTOS = {
     "1": "2", "2": "1",
@@ -160,7 +160,7 @@ def fusionar_cartas(mazo, agr_act, agr_paq, agr_ent, eventos):
 def inicializar_juego():
     return {
         "ronda": 1,
-        "historial": set(),
+        "historial": [],
         "mazos": {1: [], 2: []},
         "proyectos": None,
         "finalizado": False
@@ -194,7 +194,7 @@ def siguiente_ronda(estado, estructura, agrupaciones):
 
         if disponibles:
             robadas = random.sample(disponibles, min(16, len(disponibles)))
-            estado["historial"].update(robadas)
+            estado["historial"].extend(robadas)
             estado["mazos"][equipo].extend(robadas)
 
         estado["mazos"][equipo] = fusionar_cartas(
