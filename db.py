@@ -1,40 +1,48 @@
 import sqlite3
 import json
+import os
 
-DB_FILE = "partida.db"
+DB_PATH = os.path.join(os.path.dirname(__file__), "estado.db")
 
-def init_db():
-    conn = sqlite3.connect(DB_FILE)
-    cur = conn.cursor()
-    cur.execute("""
-        CREATE TABLE IF NOT EXISTS partida (
-            id INTEGER PRIMARY KEY,
-            estado TEXT
-        )
-    """)
-    conn.commit()
-    conn.close()
 
-def get_estado():
-    conn = sqlite3.connect(DB_FILE)
-    cur = conn.cursor()
-    cur.execute("SELECT estado FROM partida WHERE id=1")
-    row = cur.fetchone()
+def get_connection():
+    return sqlite3.connect(DB_PATH)
 
-    if row is None:
-        conn.close()
+
+def load_estado():
+    if not os.path.exists(DB_PATH):
         return None
 
-    estado = json.loads(row[0])
+    conn = get_connection()
+    cur = conn.cursor()
+
+    cur.execute(
+        "CREATE TABLE IF NOT EXISTS estado (id INTEGER PRIMARY KEY, data TEXT)"
+    )
+
+    cur.execute("SELECT data FROM estado WHERE id = 1")
+    row = cur.fetchone()
+
     conn.close()
-    return estado
+
+    if row is None:
+        return None
+
+    return json.loads(row[0])
+
 
 def save_estado(estado):
-    conn = sqlite3.connect(DB_FILE)
+    conn = get_connection()
     cur = conn.cursor()
+
     cur.execute(
-        "INSERT OR REPLACE INTO partida (id, estado) VALUES (1, ?)",
+        "CREATE TABLE IF NOT EXISTS estado (id INTEGER PRIMARY KEY, data TEXT)"
+    )
+
+    cur.execute(
+        "REPLACE INTO estado (id, data) VALUES (1, ?)",
         (json.dumps(estado),)
     )
+
     conn.commit()
     conn.close()
