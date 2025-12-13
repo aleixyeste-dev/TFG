@@ -71,9 +71,9 @@ def mostrar_equipo(col, equipo):
         return
 
     cols = col.columns(4)
-    for i, carta in enumerate(mazo):
+    for i, carta in enumerate(azo := mazo):
         with cols[i % 4]:
-            col.image(carta, width=160)
+            st.image(carta, width=160)
 
 
 mostrar_equipo(col1, 1)
