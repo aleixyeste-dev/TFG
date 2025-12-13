@@ -45,13 +45,13 @@ with col_top1:
     if st.button("▶️ Siguiente ronda (acción compartida)"):
         estado, eventos = siguiente_ronda(estado, estructura, agrupaciones)
         save_estado(estado)
-        st.experimental_rerun()
+        st.rerun()
 
 with col_top2:
     if st.button("🔄 Reiniciar partida (para todos)"):
         estado = inicializar_juego()
         save_estado(estado)
-        st.experimental_rerun()
+        st.rerun()
 
 st.divider()
 
