@@ -23,19 +23,25 @@ def natural_key(text):
 
 
 def normalizar_estado(estado):
-    """
-    Corrige estados antiguos guardados con claves string en 'mazos'
-    y garantiza compatibilidad con la lógica actual.
-    """
-    if "mazos" in estado and isinstance(estado["mazos"], dict):
-        nuevos = {}
-        for k, v in estado["mazos"].items():
-            try:
-                nuevos[int(k)] = v
-            except:
-                pass
-        estado["mazos"] = nuevos
+    # Asegurar estructura básica
+    if "mazos" not in estado or not isinstance(estado["mazos"], dict):
+        estado["mazos"] = {}
+
+    mazos_norm = {}
+    for k, v in estado["mazos"].items():
+        try:
+            mazos_norm[int(k)] = v
+        except:
+            pass
+
+    estado["mazos"] = mazos_norm
+
+    # Garantizar que existen los dos equipos
+    estado["mazos"].setdefault(1, [])
+    estado["mazos"].setdefault(2, [])
+
     return estado
+
 
 # ===============================
 # CARGA DE ESTRUCTURA
@@ -103,6 +109,7 @@ def siguiente_ronda(estado, estructura, agrupaciones=None):
         if disponibles:
             robadas = random.sample(disponibles, min(16, len(disponibles)))
             estado["historial"].extend(robadas)
+            estado["mazos"].setdefault(equipo, [])
             estado["mazos"][equipo].extend(robadas)
             eventos.append(f"Equipo {equipo} roba {len(robadas)} actividades")
 
