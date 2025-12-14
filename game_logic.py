@@ -185,7 +185,8 @@ def siguiente_ronda(estado, estructura, agrupaciones=None):
     # Fusión (no destructiva)
     for equipo in (1, 2):
         mazo, nuevos_eventos = fusionar_cartas(
-            estado["mazos"][equipo], agrupaciones
+            estado["mazos"][equipo],
+            agrupaciones
         )
         estado["mazos"][equipo] = mazo
         eventos.extend(nuevos_eventos)
