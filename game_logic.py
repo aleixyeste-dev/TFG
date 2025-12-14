@@ -204,11 +204,12 @@ def siguiente_ronda(estado, estructura, agrupaciones):
         robadas = random.sample(disponibles, min(16, len(disponibles)))
 
         estado["historial"].extend(robadas)
-        estado["mazos"][equipo].extend(robadas)
+        estado["mazos"][str(equipo)].extend(robadas)
 
-        estado["mazos"][equipo], nuevos_eventos = fusionar_cartas(
-            estado["mazos"][equipo], agrupaciones
-        )
+        mazo = estado["mazos"][str(equipo)]
+        mazo, nuevos_eventos = fusionar_cartas(mazo, agrupaciones)
+        estado["mazos"][str(equipo)] = mazo
+
         eventos.extend(nuevos_eventos)
 
     estado["ronda"] += 1
