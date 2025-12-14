@@ -3,25 +3,26 @@ import random
 import re
 
 # ==============================
-# CONFIGURACIÓN
-# ==============================
-
-BASE_PATH = os.path.join(os.path.dirname(__file__), "imagenes", "Proyectos")
-
-EMPAREJAMIENTOS = {
-    "1": "2", "2": "1",
-    "3": "4", "4": "3",
-    "5": "6", "6": "5"
-}
-
-
-# ==============================
-# UTILIDADES
+# Utilidades
 # ==============================
 
 def natural_key(text):
-    return [int(t) if t.isdigit() else t for t in re.split(r"(\d+)", text)]
+    return [int(c) if c.isdigit() else c for c in re.split(r"(\d+)", text)]
 
+
+def normalizar_estado(estado):
+    """Asegura que el estado tiene siempre la estructura mínima correcta"""
+    estado.setdefault("ronda", 1)
+    estado.setdefault("historial", [])
+    estado.setdefault("mazos", {1: [], 2: []})
+    estado.setdefault("proyectos", None)
+    estado.setdefault("finalizado", False)
+    return estado
+
+
+# ==============================
+# Inicialización
+# ==============================
 
 def inicializar_juego():
     return {
@@ -29,222 +30,130 @@ def inicializar_juego():
         "historial": [],
         "mazos": {1: [], 2: []},
         "proyectos": None,
-        "finalizado": False
+        "finalizado": False,
     }
 
 
-def normalizar_estado(estado):
-    estado.setdefault("historial", [])
-    estado.setdefault("mazos", {1: [], 2: []})
-    return estado
-
-
 # ==============================
-# CARGA DE ESTRUCTURA
+# Carga de estructura de ficheros
 # ==============================
 
-def cargar_estructura_proyecto():
+def cargar_estructura_proyecto(base_path=None):
+    """
+    Construye una estructura de proyectos a partir del árbol de carpetas
+    imagenes/Proyectos/<id>/Entregables/<ent>/Paquete trabajo/Actividades/*.jpg
+    """
+    if base_path is None:
+        base_path = os.path.join(os.path.dirname(__file__), "imagenes", "Proyectos")
+
     estructura = {}
 
-    for proyecto_id in sorted(os.listdir(BASE_PATH), key=natural_key):
-        ruta_proyecto = os.path.join(BASE_PATH, proyecto_id)
+    for pid in sorted(os.listdir(base_path), key=natural_key):
+        ruta_proyecto = os.path.join(base_path, pid)
         if not os.path.isdir(ruta_proyecto):
             continue
 
-        entregables = {}
-        ruta_entregables = os.path.join(ruta_proyecto, "Entregables")
+        estructura[pid] = {"actividades": []}
 
-        for ent_id in sorted(os.listdir(ruta_entregables), key=natural_key):
-            ruta_ent = os.path.join(ruta_entregables, ent_id)
-            if not os.path.isdir(ruta_ent):
-                continue
+        entregables_path = os.path.join(ruta_proyecto, "Entregables")
+        if not os.path.isdir(entregables_path):
+            continue
 
-            ruta_actividades = os.path.join(
-                ruta_ent, "Paquete trabajo", "Actividades"
+        for eid in sorted(os.listdir(entregables_path), key=natural_key):
+            act_path = os.path.join(
+                entregables_path, eid, "Paquete trabajo", "Actividades"
             )
-
-            if not os.path.isdir(ruta_actividades):
+            if not os.path.isdir(act_path):
                 continue
 
-            actividades = [
-                os.path.join(ruta_actividades, f)
-                for f in sorted(os.listdir(ruta_actividades), key=natural_key)
-                if f.endswith(".jpg")
-            ]
-
-            entregables[ent_id] = {
-                "paquetes": {
-                    ent_id: {   # 1 paquete por entregable
-                        "actividades": actividades,
-                        "carta": os.path.join(ruta_ent, f"{ent_id}.jpg")
-                    }
-                },
-                "carta": os.path.join(ruta_ent, f"{ent_id}.jpg")
-            }
-
-        estructura[proyecto_id] = {
-            "entregables": entregables,
-            "carta": os.path.join(ruta_proyecto, f"{proyecto_id}.jpg")
-        }
+            for f in sorted(os.listdir(act_path), key=natural_key):
+                if f.lower().endswith((".jpg", ".png")):
+                    estructura[pid]["actividades"].append(os.path.join(act_path, f))
 
     return estructura
 
 
 # ==============================
-# AGRUPACIONES AUTOMÁTICAS
+# Agrupaciones (para fusiones)
 # ==============================
 
 def generar_diccionario_agrupaciones(estructura):
-    agr = {
+    """
+    Estructura mínima para permitir fusiones futuras.
+    Se deja preparada pero NO bloquea el juego si está vacía.
+    """
+    return {
         "actividades_a_paquete": {},
         "paquetes_a_entregable": {},
-        "entregables_a_proyecto": {}
+        "entregables_a_proyecto": {},
     }
 
-    for pid, pinfo in estructura.items():
-        for eid, einfo in pinfo["entregables"].items():
-            # Paquetes → Entregable
-            paquetes = []
-            for pqid, pqinfo in einfo["paquetes"].items():
-                key_pq = f"{pid}_{eid}_{pqid}"
-                agr["actividades_a_paquete"][key_pq] = {
-                    "actividades": pqinfo["actividades"],
-                    "carta": pqinfo["carta"]
-                }
-                paquetes.append(pqinfo["carta"])
-
-            agr["paquetes_a_entregable"][f"{pid}_{eid}"] = {
-                "paquetes": paquetes,
-                "carta": einfo["carta"]
-            }
-
-        agr["entregables_a_proyecto"][pid] = {
-            "entregables": [e["carta"] for e in pinfo["entregables"].values()],
-            "carta": pinfo["carta"]
-        }
-
-    return agr
-
 
 # ==============================
-# FUSIÓN DE CARTAS
+# Fusión de cartas (SAFE)
 # ==============================
 
-def fusionar_cartas(mazo, agrupaciones):
+def fusionar_cartas(mazo, agrupaciones=None):
+    """
+    Versión segura: por ahora NO elimina cartas ni rompe el flujo.
+    Devuelve el mazo tal cual y una lista de eventos.
+    """
     eventos = []
-    cambiado = True
 
-    while cambiado:
-        cambiado = False
+    # Si no hay reglas de fusión, no hacer nada
+    if not agrupaciones:
+        return mazo, eventos
 
-        # Actividades → Paquete
-        for info in agrupaciones["actividades_a_paquete"].values():
-            if all(a in mazo for a in info["actividades"]):
-                for a in info["actividades"]:
-                    mazo.remove(a)
-                mazo.append(info["carta"])
-                eventos.append("🔧 Paquete de trabajo completado")
-                cambiado = True
-                break
-
-        if cambiado:
-            continue
-
-        # Paquetes → Entregable
-        for info in agrupaciones["paquetes_a_entregable"].values():
-            if all(p in mazo for p in info["paquetes"]):
-                for p in info["paquetes"]:
-                    mazo.remove(p)
-                mazo.append(info["carta"])
-                eventos.append("📦 Entregable completado")
-                cambiado = True
-                break
-
-        if cambiado:
-            continue
-
-        # Entregables → Proyecto
-        for info in agrupaciones["entregables_a_proyecto"].values():
-            if all(e in mazo for e in info["entregables"]):
-                for e in info["entregables"]:
-                    mazo.remove(e)
-                mazo.append(info["carta"])
-                eventos.append("🏆 Proyecto completado")
-                cambiado = True
-                break
-
+    # Punto de extensión futuro (TFG)
     return mazo, eventos
 
 
 # ==============================
-# LÓGICA DE RONDA
+# Lógica de ronda
 # ==============================
 
-import copy
-import random
-
 def siguiente_ronda(estado, estructura, agrupaciones=None):
-    nuevo_estado = copy.deepcopy(estado)
+    estado = normalizar_estado(dict(estado))
     eventos = []
 
-    # Asegurar estructura mínima
-    nuevo_estado.setdefault("historial", [])
-    nuevo_estado.setdefault("mazos", {1: [], 2: []})
-    nuevo_estado.setdefault("proyectos", {})
-
-    # Asignar proyectos solo en primera ronda
-    if nuevo_estado["ronda"] == 1 or not nuevo_estado["proyectos"]:
+    # Asignación inicial de proyectos
+    if estado["proyectos"] is None:
         proyectos = list(estructura.keys())
+        if len(proyectos) < 2:
+            estado["finalizado"] = True
+            return estado, eventos
+
         p1 = random.choice(proyectos)
-        p2 = EMPAREJAMIENTOS.get(p1, random.choice(proyectos))
-        nuevo_estado["proyectos"] = {1: p1, 2: p2}
-        eventos.append(f"Equipo 1 proyecto {p1}")
-        eventos.append(f"Equipo 2 proyecto {p2}")
+        p2 = random.choice([p for p in proyectos if p != p1])
+        estado["proyectos"] = {1: p1, 2: p2}
+        eventos.append(f"Proyecto equipo 1: {p1}")
+        eventos.append(f"Proyecto equipo 2: {p2}")
 
-    # Reparto de cartas
-    for equipo, proyecto in nuevo_estado["proyectos"].items():
-
-        todas = obtener_actividades_proyecto(estructura, proyecto)
+    # Reparto de actividades
+    for equipo, proyecto in estado["proyectos"].items():
+        actividades = estructura.get(proyecto, {}).get("actividades", [])
 
         disponibles = [
-            a for a in todas
-            if a not in nuevo_estado["historial"]
+            a for a in actividades
+            if a not in estado["historial"]
         ]
 
-        # Si no quedan nuevas, permitir reutilizar
+        # Si no quedan nuevas, permitir repetir
         if not disponibles:
-            disponibles = todas.copy()
+            disponibles = list(actividades)
 
-        robadas = random.sample(disponibles, min(16, len(disponibles)))
+        if disponibles:
+            robadas = random.sample(disponibles, min(16, len(disponibles)))
+            estado["historial"].extend(robadas)
+            estado["mazos"][equipo].extend(robadas)
 
-        # 🔑 ESTO ES LO QUE TE FALTABA 🔑
-        nuevo_estado["historial"].extend(robadas)
-        nuevo_estado["mazos"][equipo].extend(robadas)
+    # Fusión (no destructiva)
+    for equipo in (1, 2):
+        mazo, nuevos_eventos = fusionar_cartas(
+            estado["mazos"][equipo], agrupaciones
+        )
+        estado["mazos"][equipo] = mazo
+        eventos.extend(nuevos_eventos)
 
-        eventos.append(f"Equipo {equipo} roba {len(robadas)} cartas")
-
-    nuevo_estado["ronda"] += 1
-    return nuevo_estado, eventos
-
-
-        if not disponibles:
-            continue
-
-        robadas = random.sample(disponibles, min(16, len(disponibles)))
-
-        nuevo_estado["historial"].extend(robadas)
-        nuevo_estado["mazos"][str(equipo)].extend(robadas)
-
-    return nuevo_estado, eventos
-
-
-def obtener_actividades_proyecto(estructura, proyecto_id):
-    actividades = []
-
-    proyecto = estructura[proyecto_id]
-
-    for entregable in proyecto["entregables"].values():
-        for paquete in entregable["paquetes"].values():
-            actividades.extend(paquete["actividades"])
-
-    return actividades
+    estado["ronda"] += 1
+    return estado, eventos
