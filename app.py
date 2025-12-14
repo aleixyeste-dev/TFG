@@ -4,9 +4,8 @@ from game_logic import (
     inicializar_juego,
     siguiente_ronda,
     cargar_estructura_proyecto,
-    generar_diccionario_agrupaciones,
+    generar_diccionario_agrupaciones
 )
-
 # ---------------------------------
 # CONFIGURACIÓN
 # ---------------------------------
