@@ -59,28 +59,26 @@ def cargar_estructura_proyecto():
             if not os.path.isdir(ruta_ent):
                 continue
 
-            paquetes = {}
-            ruta_paquetes = os.path.join(ruta_ent, "Paquete trabajo")
+            ruta_actividades = os.path.join(
+                ruta_ent, "Paquete trabajo", "Actividades"
+            )
 
-            for pq_id in sorted(os.listdir(ruta_paquetes), key=natural_key):
-                ruta_pq = os.path.join(ruta_paquetes, pq_id)
-                if not os.path.isdir(ruta_pq):
-                    continue
+            if not os.path.isdir(ruta_actividades):
+                continue
 
-                acts_path = os.path.join(ruta_pq, "Actividades")
-                actividades = [
-                    os.path.join(acts_path, f)
-                    for f in sorted(os.listdir(acts_path), key=natural_key)
-                    if f.endswith(".jpg")
-                ]
-
-                paquetes[pq_id] = {
-                    "actividades": actividades,
-                    "carta": os.path.join(ruta_pq, f"{pq_id}.jpg")
-                }
+            actividades = [
+                os.path.join(ruta_actividades, f)
+                for f in sorted(os.listdir(ruta_actividades), key=natural_key)
+                if f.endswith(".jpg")
+            ]
 
             entregables[ent_id] = {
-                "paquetes": paquetes,
+                "paquetes": {
+                    ent_id: {   # 1 paquete por entregable
+                        "actividades": actividades,
+                        "carta": os.path.join(ruta_ent, f"{ent_id}.jpg")
+                    }
+                },
                 "carta": os.path.join(ruta_ent, f"{ent_id}.jpg")
             }
 
