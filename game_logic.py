@@ -213,8 +213,10 @@ def siguiente_ronda(estado, estructura, agrupaciones):
     # 3️⃣ Repartir actividades
     # ─────────────────────────────
     for equipo, proyecto in nuevo_estado["proyectos"].items():
+        todas = obtener_actividades_proyecto(estructura, proyecto)
+
         disponibles = [
-            a for a in estructura[proyecto]["actividades"]
+            a for a in todas
             if a not in nuevo_estado["historial"]
         ]
 
@@ -227,3 +229,15 @@ def siguiente_ronda(estado, estructura, agrupaciones):
         nuevo_estado["mazos"][str(equipo)].extend(robadas)
 
     return nuevo_estado, eventos
+
+
+def obtener_actividades_proyecto(estructura, proyecto_id):
+    actividades = []
+
+    proyecto = estructura[proyecto_id]
+
+    for entregable in proyecto["entregables"].values():
+        for paquete in entregable["paquetes"].values():
+            actividades.extend(paquete["actividades"])
+
+    return actividades
