@@ -26,10 +26,10 @@ def normalizar_estado(estado):
 
 def inicializar_juego():
     return {
-        "ronda": 1,
+        "ronda": 0,
         "historial": [],
         "mazos": {1: [], 2: []},
-        "proyectos": None,
+        "proyectos": {},
         "finalizado": False,
     }
 
@@ -148,6 +148,16 @@ def fusionar_cartas(mazo, agrupaciones):
 # ==============================
 
 def siguiente_ronda(estado, estructura, agrupaciones):
+    estado = estado.copy()
+
+    # 🔒 Blindaje crítico
+    if not estado.get("proyectos"):
+        proyectos = list(estructura.keys())
+        p1 = random.choice(proyectos)
+        p2 = random.choice(proyectos)
+        estado["proyectos"] = {"1": p1, "2": p2}
+
+    eventos = []
     estado = estado.copy()
     eventos = []
 
