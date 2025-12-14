@@ -93,18 +93,53 @@ def generar_diccionario_agrupaciones(estructura):
 # Fusión de cartas (SAFE)
 # ==============================
 
-def fusionar_cartas(mazo, agrupaciones=None):
+def fusionar_cartas(mazo, agrupaciones):
     """
-    Versión segura: por ahora NO elimina cartas ni rompe el flujo.
-    Devuelve el mazo tal cual y una lista de eventos.
+    Intenta fusionar cartas del mazo según las agrupaciones.
+    Nunca rompe el estado ni lanza KeyError.
     """
     eventos = []
 
-    # Si no hay reglas de fusión, no hacer nada
     if not agrupaciones:
         return mazo, eventos
 
-    # Punto de extensión futuro (TFG)
+    actividades_a_paquete = agrupaciones.get("actividades_a_paquete", {})
+    paquetes_a_entregable = agrupaciones.get("paquetes_a_entregable", {})
+    entregables_a_proyecto = agrupaciones.get("entregables_a_proyecto", {})
+
+    # 🔹 ACTIVIDADES → PAQUETE
+    for key, info in actividades_a_paquete.items():
+        actividades = info.get("actividades", [])
+        carta_resultado = info.get("carta")
+
+        if carta_resultado and all(a in mazo for a in actividades):
+            for a in actividades:
+                mazo.remove(a)
+            mazo.append(carta_resultado)
+            eventos.append(f"Fusión completada → {carta_resultado}")
+
+    # 🔹 PAQUETES → ENTREGABLE
+    for key, info in paquetes_a_entregable.items():
+        paquetes = info.get("paquetes", [])
+        carta_resultado = info.get("carta")
+
+        if carta_resultado and all(p in mazo for p in paquetes):
+            for p in paquetes:
+                mazo.remove(p)
+            mazo.append(carta_resultado)
+            eventos.append(f"Fusión completada → {carta_resultado}")
+
+    # 🔹 ENTREGABLES → PROYECTO
+    for pid, info in entregables_a_proyecto.items():
+        entregables = info.get("entregables", [])
+        carta_resultado = info.get("carta")
+
+        if carta_resultado and all(e in mazo for e in entregables):
+            for e in entregables:
+                mazo.remove(e)
+            mazo.append(carta_resultado)
+            eventos.append(f"Proyecto completado → {carta_resultado}")
+
     return mazo, eventos
 
 
