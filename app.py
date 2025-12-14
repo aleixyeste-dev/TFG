@@ -25,7 +25,7 @@ st.set_page_config(
 @st.cache_data
 def cargar_datos_cache():
     estructura = cargar_estructura_proyecto()
-    agrupaciones = generar_diccionario_agrupaciones()
+    agrupaciones = generar_diccionario_agrupaciones(estructura)
     return estructura, agrupaciones
 
 
