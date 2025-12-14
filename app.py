@@ -23,13 +23,13 @@ st.set_page_config(
 # CARGA DE DATOS (CACHE)
 # -------------------------------
 @st.cache_data
-def cargar_datos():
+def cargar_datos_cache():
     estructura = cargar_estructura_proyecto()
     agrupaciones = generar_diccionario_agrupaciones()
     return estructura, agrupaciones
 
 
-estructura, agrupaciones = cargar_datos()
+estructura, agrupaciones = cargar_datos_cache()
 
 
 # -------------------------------
@@ -94,8 +94,7 @@ mostrar_equipo(col2, 2)
 
 
 # -------------------------------
-# DEBUG (COLAPSABLE)
+# DEBUG
 # -------------------------------
 with st.expander("ℹ️ Estado interno (debug)"):
     st.json(estado)
-
