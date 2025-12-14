@@ -183,42 +183,49 @@ def fusionar_cartas(mazo, agrupaciones):
 import copy
 import random
 
-def siguiente_ronda(estado, estructura, agrupaciones):
+def siguiente_ronda(estado, estructura, agrupaciones=None):
     nuevo_estado = copy.deepcopy(estado)
     eventos = []
 
-    # ─────────────────────────────
-    # 1️⃣ Asignar proyectos si no existen
-    # ─────────────────────────────
-    if not nuevo_estado.get("proyectos"):
-        proyectos = list(estructura.keys())
+    # Asegurar estructura mínima
+    nuevo_estado.setdefault("historial", [])
+    nuevo_estado.setdefault("mazos", {1: [], 2: []})
+    nuevo_estado.setdefault("proyectos", {})
 
+    # Asignar proyectos solo en primera ronda
+    if nuevo_estado["ronda"] == 1 or not nuevo_estado["proyectos"]:
+        proyectos = list(estructura.keys())
         p1 = random.choice(proyectos)
         p2 = EMPAREJAMIENTOS.get(p1, random.choice(proyectos))
+        nuevo_estado["proyectos"] = {1: p1, 2: p2}
+        eventos.append(f"Equipo 1 proyecto {p1}")
+        eventos.append(f"Equipo 2 proyecto {p2}")
 
-        nuevo_estado["proyectos"] = {
-            1: p1,
-            2: p2
-        }
-
-        eventos.append(f"Proyecto equipo 1: {p1}")
-        eventos.append(f"Proyecto equipo 2: {p2}")
-
-    # ─────────────────────────────
-    # 2️⃣ Avanzar ronda
-    # ─────────────────────────────
-    nuevo_estado["ronda"] += 1
-
-    # ─────────────────────────────
-    # 3️⃣ Repartir actividades
-    # ─────────────────────────────
+    # Reparto de cartas
     for equipo, proyecto in nuevo_estado["proyectos"].items():
+
         todas = obtener_actividades_proyecto(estructura, proyecto)
 
         disponibles = [
             a for a in todas
             if a not in nuevo_estado["historial"]
         ]
+
+        # Si no quedan nuevas, permitir reutilizar
+        if not disponibles:
+            disponibles = todas.copy()
+
+        robadas = random.sample(disponibles, min(16, len(disponibles)))
+
+        # 🔑 ESTO ES LO QUE TE FALTABA 🔑
+        nuevo_estado["historial"].extend(robadas)
+        nuevo_estado["mazos"][equipo].extend(robadas)
+
+        eventos.append(f"Equipo {equipo} roba {len(robadas)} cartas")
+
+    nuevo_estado["ronda"] += 1
+    return nuevo_estado, eventos
+
 
         if not disponibles:
             continue
