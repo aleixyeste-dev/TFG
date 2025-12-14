@@ -39,7 +39,7 @@ def inicializar_juego():
 
 def cargar_estructura_proyecto(base_path=None):
     if base_path is None:
-        base_path = os.path.join(os.path.dirname(__file__), "imagenes", "Proyectos")
+        base_path = "/mount/src/tfg/imagenes/Proyectos"
 
     estructura = {}
 
