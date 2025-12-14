@@ -1,48 +1,31 @@
-import sqlite3
 import json
 import os
 
-DB_PATH = os.path.join(os.path.dirname(__file__), "estado.db")
-
-
-def get_connection():
-    return sqlite3.connect(DB_PATH)
+ESTADO_FILE = "estado.json"
 
 
 def load_estado():
-    if not os.path.exists(DB_PATH):
+    """
+    Carga el estado desde disco.
+    Si no existe, devuelve None.
+    """
+    if not os.path.exists(ESTADO_FILE):
         return None
 
-    conn = get_connection()
-    cur = conn.cursor()
-
-    cur.execute(
-        "CREATE TABLE IF NOT EXISTS estado (id INTEGER PRIMARY KEY, data TEXT)"
-    )
-
-    cur.execute("SELECT data FROM estado WHERE id = 1")
-    row = cur.fetchone()
-
-    conn.close()
-
-    if row is None:
+    try:
+        with open(ESTADO_FILE, "r", encoding="utf-8") as f:
+            return json.load(f)
+    except Exception:
         return None
-
-    return json.loads(row[0])
 
 
 def save_estado(estado):
-    conn = get_connection()
-    cur = conn.cursor()
+    """
+    Guarda el estado actual en disco.
+    """
+    try:
+        with open(ESTADO_FILE, "w", encoding="utf-8") as f:
+            json.dump(estado, f, indent=2)
+    except Exception as e:
+        print("Error guardando estado:", e)
 
-    cur.execute(
-        "CREATE TABLE IF NOT EXISTS estado (id INTEGER PRIMARY KEY, data TEXT)"
-    )
-
-    cur.execute(
-        "REPLACE INTO estado (id, data) VALUES (1, ?)",
-        (json.dumps(estado),)
-    )
-
-    conn.commit()
-    conn.close()
