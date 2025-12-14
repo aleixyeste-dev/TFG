@@ -168,15 +168,22 @@ def siguiente_ronda(estado, estructura, agrupaciones):
     estado.setdefault("historial", [])
     estado.setdefault("mazos", {"1": [], "2": []})
 
-    for equipo, proyecto in estado["proyectos"].items():
-        equipo = str(equipo)
+   for equipo, proyecto in estado["proyectos"].items():
+    actividades = obtener_actividades_proyecto(estructura, proyecto)
 
-        # Actividades disponibles para ese proyecto
-        disponibles = [
-            info["carta"]
-            for key, info in agrupaciones["actividades_a_paquete"].items()
-            if key.startswith(f"{proyecto}_") and info["carta"] not in estado["historial"]
-        ]
+    # quitar las ya usadas
+    disponibles = [a for a in actividades if a not in estado["historial"]]
+
+    # si no quedan nuevas, permitir reutilizar
+    if not disponibles:
+        disponibles = actividades.copy()
+
+    if disponibles:
+        robadas = random.sample(disponibles, min(16, len(disponibles)))
+        estado["mazos"][equipo].extend(robadas)
+        estado["historial"].extend(robadas)
+
+        
 
         if not disponibles:
             continue
@@ -191,3 +198,14 @@ def siguiente_ronda(estado, estructura, agrupaciones):
         )
 
     return estado, eventos
+
+def obtener_actividades_proyecto(estructura, proyecto_id):
+    actividades = []
+
+    proyecto = estructura.get(proyecto_id, {})
+    for entregable in proyecto.get("entregables", {}).values():
+        for paquete in entregable.get("paquetes", {}).values():
+            actividades.extend(paquete.get("actividades", []))
+
+    return actividades
+
