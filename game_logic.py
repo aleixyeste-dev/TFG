@@ -180,7 +180,10 @@ def fusionar_cartas(mazo, agrupaciones):
 # LÓGICA DE RONDA
 # ==============================
 
-def siguiente_ronda(estado, estructura, agrupaciones):
+def siguiente_ronda(estado, estructura, agrupaciones=None):
+    if agrupaciones is None:
+        agrupaciones = generar_diccionario_agrupaciones(estructura)
+
     estado = normalizar_estado(estado)
     eventos = []
 
