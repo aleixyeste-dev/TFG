@@ -1,7 +1,7 @@
 import os
 import random
 import re
-
+import copy
 # ==============================
 # Utilidades
 # ==============================
