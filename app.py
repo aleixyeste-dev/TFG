@@ -5,6 +5,7 @@ from game_logic import (
     siguiente_ronda,
     cargar_estructura_proyecto,
     generar_diccionario_agrupaciones
+    fusiones_disponibles
 )
 # ---------------------------------
 # CONFIGURACIÓN
