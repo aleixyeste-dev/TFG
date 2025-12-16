@@ -144,7 +144,9 @@ def siguiente_ronda(estado, estructura, agrupaciones):
 
 import os
 
-from fusiones import FUSIONES_PAQUETES
+import fusiones
+
+FUSIONES_PAQUETES = fusiones.FUSIONES_PAQUETES
 
 
 def obtener_id_carta(ruta):
