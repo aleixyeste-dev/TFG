@@ -72,9 +72,37 @@ def mostrar_equipo(col, equipo):
             st.image(carta, width=160)
 
 
+            
+def mostrar_fusiones(col, equipo):
+    mazo = estado["mazos"].get(str(equipo), [])
+    fusiones = fusiones_disponibles(mazo, agrupaciones)
+
+    if not fusiones:
+        return
+
+    with col:
+        st.markdown("### ✨ Fusiones disponibles")
+
+        for f in fusiones:
+            st.markdown(f"**{f['tipo']}**")
+
+            cols = st.columns(len(f["componentes"]) + 1)
+
+            for i, carta in enumerate(f["componentes"]):
+                cols[i].image(carta, width=90)
+
+            cols[-1].markdown("➡️")
+            cols[-1].image(f["resultado"], width=110)
+
+            st.divider()
+
+
 col1, col2 = st.columns(2)
 mostrar_equipo(col1, 1)
+mostrar_fusiones(col1, 1)
+
 mostrar_equipo(col2, 2)
+mostrar_fusiones(col2, 2)
 
 # ---------------------------------
 # DEBUG

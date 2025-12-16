@@ -121,3 +121,37 @@ def siguiente_ronda(estado, estructura, agrupaciones):
 
     return estado, eventos
 
+
+def fusiones_disponibles(mazo, agrupaciones):
+    fusiones = []
+
+    # 1️⃣ Actividades → Paquete
+    for key, info in agrupaciones["actividades_a_paquete"].items():
+        if all(a in mazo for a in info["actividades"]):
+            fusiones.append({
+                "tipo": "Paquete de trabajo",
+                "componentes": info["actividades"],
+                "resultado": info["carta"]
+            })
+
+    # 2️⃣ Paquetes → Entregable
+    for key, info in agrupaciones["paquetes_a_entregable"].items():
+        if all(p in mazo for p in info["paquetes"]):
+            fusiones.append({
+                "tipo": "Entregable",
+                "componentes": info["paquetes"],
+                "resultado": info["carta"]
+            })
+
+    # 3️⃣ Entregables → Proyecto
+    for key, info in agrupaciones["entregables_a_proyecto"].items():
+        if all(e in mazo for e in info["entregables"]):
+            fusiones.append({
+                "tipo": "Proyecto",
+                "componentes": info["entregables"],
+                "resultado": info["carta"]
+            })
+
+    return fusiones
+
+
