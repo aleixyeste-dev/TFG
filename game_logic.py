@@ -92,6 +92,9 @@ def fusionar_cartas(mazo, agrupaciones):
 # Ronda
 # ==============================
 
+import copy
+import random
+
 def siguiente_ronda(estado, estructura, agrupaciones):
     nuevo_estado = copy.deepcopy(estado)
     eventos = []
@@ -99,66 +102,42 @@ def siguiente_ronda(estado, estructura, agrupaciones):
     if nuevo_estado.get("finalizado"):
         return nuevo_estado, eventos
 
+    # avanzar ronda
     nuevo_estado["ronda"] += 1
 
-    # Reparto por equipo
-    for equipo, proyecto in nuevo_estado["proyectos"].items():
+    # asegurar estructura de mazos
+    for equipo in ["1", "2"]:
+        if equipo not in nuevo_estado["mazos"]:
+            nuevo_estado["mazos"][equipo] = []
 
-        # Inicializar mazo si no existe
-        nuevo_estado["mazos"].setdefault(equipo, [])
+    # 🔹 REPARTO DE CARTAS (CLARO Y DIRECTO)
+    for equipo in ["1", "2"]:
+        proyecto_id = nuevo_estado["proyectos"].get(equipo)
 
-        # --- 1️⃣ OBTENER ACTIVIDADES DISPONIBLES ---
-        actividades = estructura[proyecto]["actividades"]
-
-        if not actividades:
+        if not proyecto_id:
             continue
 
-        # Robar hasta 2 cartas por ronda
-        robadas = random.sample(
-            actividades,
-            k=min(2, len(actividades))
-        )
+        # cartas disponibles del proyecto
+        cartas_proyecto = [
+            info["carta"]
+            for key, info in agrupaciones["actividades_a_paquete"].items()
+            if key.startswith(f"{proyecto_id}_")
+        ]
 
-        nuevo_estado["mazos"][equipo].extend(robadas)
+        if not cartas_proyecto:
+            continue
+
+        carta = random.choice(cartas_proyecto)
+        nuevo_estado["mazos"][equipo].append(carta)
 
         eventos.append({
+            "tipo": "robo",
             "equipo": equipo,
-            "accion": "robo",
-            "cartas": robadas
+            "carta": carta
         })
 
-        # --- 2️⃣ APLICAR FUSIONES ---
-        hubo_fusion = True
-
-        while hubo_fusion:
-            hubo_fusion = False
-            mazo = nuevo_estado["mazos"][equipo]
-
-            fusiones = fusiones_disponibles(mazo, agrupaciones)
-
-            if not fusiones:
-                break
-
-            fusion = fusiones[0]  # aplicar la primera posible
-
-            # Eliminar cartas consumidas
-            for c in fusion["consume"]:
-                if c in mazo:
-                    mazo.remove(c)
-
-            # Añadir carta resultante
-            mazo.append(fusion["resultado"])
-
-            eventos.append({
-                "equipo": equipo,
-                "accion": "fusion",
-                "tipo": fusion["tipo"],
-                "resultado": fusion["resultado"]
-            })
-
-            hubo_fusion = True
-
     return nuevo_estado, eventos
+
 
 
 
