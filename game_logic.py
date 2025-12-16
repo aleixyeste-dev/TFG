@@ -93,65 +93,123 @@ def fusionar_cartas(mazo, agrupaciones):
 # ==============================
 
 def siguiente_ronda(estado, estructura, agrupaciones):
-    estado = normalizar_estado(estado.copy())
+import random
+import copy
+
+
+def siguiente_ronda(estado, estructura, agrupaciones):
+    nuevo_estado = copy.deepcopy(estado)
     eventos = []
 
-    # Asignar proyectos si no existen
-    if not estado["proyectos"]:
-        proyectos = list(estructura.keys())
-        estado["proyectos"] = {
-            "1": random.choice(proyectos),
-            "2": random.choice(proyectos),
-        }
+    if nuevo_estado.get("finalizado"):
+        return nuevo_estado, eventos
 
-    estado["ronda"] += 1
+    nuevo_estado["ronda"] += 1
 
-    for equipo, proyecto in estado["proyectos"].items():
-        actividades = estructura.get(proyecto, {}).get("actividades", [])
+    # Reparto por equipo
+    for equipo, proyecto in nuevo_estado["proyectos"].items():
 
-        disponibles = [a for a in actividades if a not in estado["historial"]]
-        if not disponibles:
-            disponibles = actividades.copy()
+        # Inicializar mazo si no existe
+        nuevo_estado["mazos"].setdefault(equipo, [])
 
-        if disponibles:
-            robadas = random.sample(disponibles, min(4, len(disponibles)))
-            estado["mazos"][equipo].extend(robadas)
-            estado["historial"].extend(robadas)
-            eventos.append(f"Equipo {equipo} roba {len(robadas)} cartas")
+        # --- 1️⃣ OBTENER ACTIVIDADES DISPONIBLES ---
+        actividades = estructura[proyecto]["actividades"]
 
-    return estado, eventos
+        if not actividades:
+            continue
+
+        # Robar hasta 2 cartas por ronda
+        robadas = random.sample(
+            actividades,
+            k=min(2, len(actividades))
+        )
+
+        nuevo_estado["mazos"][equipo].extend(robadas)
+
+        eventos.append({
+            "equipo": equipo,
+            "accion": "robo",
+            "cartas": robadas
+        })
+
+        # --- 2️⃣ APLICAR FUSIONES ---
+        hubo_fusion = True
+
+        while hubo_fusion:
+            hubo_fusion = False
+            mazo = nuevo_estado["mazos"][equipo]
+
+            fusiones = fusiones_disponibles(mazo, agrupaciones)
+
+            if not fusiones:
+                break
+
+            fusion = fusiones[0]  # aplicar la primera posible
+
+            # Eliminar cartas consumidas
+            for c in fusion["consume"]:
+                if c in mazo:
+                    mazo.remove(c)
+
+            # Añadir carta resultante
+            mazo.append(fusion["resultado"])
+
+            eventos.append({
+                "equipo": equipo,
+                "accion": "fusion",
+                "tipo": fusion["tipo"],
+                "resultado": fusion["resultado"]
+            })
+
+            hubo_fusion = True
+
+    return nuevo_estado, eventos
+
 
 
 def fusiones_disponibles(mazo, agrupaciones):
+    """
+    Devuelve una lista de fusiones posibles a partir del mazo actual
+    """
     fusiones = []
 
-    # 1️⃣ Actividades → Paquete
+    if not mazo:
+        return fusiones
+
+    # Convertimos el mazo a IDs
+    ids_mazo = {obtener_id_carta(carta): carta for carta in mazo}
+
+    # ACTIVIDADES -> PAQUETE
     for key, info in agrupaciones["actividades_a_paquete"].items():
-        if all(a in mazo for a in info["actividades"]):
+        actividades = info["actividades"]
+
+        if all(a in ids_mazo for a in actividades):
             fusiones.append({
-                "tipo": "Paquete de trabajo",
-                "componentes": info["actividades"],
-                "resultado": info["carta"]
+                "tipo": "actividades_a_paquete",
+                "resultado": info["carta"],
+                "consume": [ids_mazo[a] for a in actividades]
             })
 
-    # 2️⃣ Paquetes → Entregable
+    # PAQUETES -> ENTREGABLE
     for key, info in agrupaciones["paquetes_a_entregable"].items():
-        if all(p in mazo for p in info["paquetes"]):
-            fusiones.append({
-                "tipo": "Entregable",
-                "componentes": info["paquetes"],
-                "resultado": info["carta"]
-            })
+        paquetes = info["paquetes"]
 
-    # 3️⃣ Entregables → Proyecto
-    for key, info in agrupaciones["entregables_a_proyecto"].items():
-        if all(e in mazo for e in info["entregables"]):
+        if all(p in mazo for p in paquetes):
             fusiones.append({
-                "tipo": "Proyecto",
-                "componentes": info["entregables"],
-                "resultado": info["carta"]
+                "tipo": "paquetes_a_entregable",
+                "resultado": info["carta"],
+                "consume": paquetes
             })
 
     return fusiones
 
+
+
+
+def obtener_id_carta(ruta):
+    """
+    Extrae el ID de la carta a partir de la ruta de la imagen
+    Ejemplo: /path/Actividades/76.jpg -> 76
+    """
+    return ruta.split("/")[-1].replace(".jpg", "")
 
