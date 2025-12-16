@@ -1,7 +1,9 @@
 import os
 import random
 import re
+import fusiones
 
+FUSIONES_PAQUETES = fusiones.FUSIONES_PAQUETES
 # ==============================
 # Utilidades
 # ==============================
@@ -140,13 +142,6 @@ def siguiente_ronda(estado, estructura, agrupaciones):
 
     return estado, eventos
 
-
-
-import os
-
-import fusiones
-
-FUSIONES_PAQUETES = fusiones.FUSIONES_PAQUETES
 
 
 def obtener_id_carta(ruta):
