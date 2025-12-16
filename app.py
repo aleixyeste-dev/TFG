@@ -62,7 +62,7 @@ def mostrar_equipo(col, equipo):
     with col:
         st.subheader(f"Equipo {equipo}")
 
-        mazo = estado["mazos"].get(equipo, [])
+        mazo = estado["mazos"].get(str(equipo), [])
 
         if not mazo:
             st.info("Sin cartas todavía")
@@ -70,6 +70,7 @@ def mostrar_equipo(col, equipo):
 
         for carta in mazo:
             st.image(carta, width=160)
+
 
 col1, col2 = st.columns(2)
 mostrar_equipo(col1, 1)
