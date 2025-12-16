@@ -34,7 +34,7 @@ estructura, agrupaciones = cargar_datos()
 # ESTADO GLOBAL
 # ---------------------------------
 if "estado" not in st.session_state:
-    st.session_state.estado = inicializar_juego()
+    st.session_state.estado = inicializar_juego(estructura)
 
 estado = st.session_state.estado
 
