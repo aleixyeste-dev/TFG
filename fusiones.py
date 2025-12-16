@@ -1,4 +1,5 @@
 import os
+import re
 
 def cargar_fusiones_desde_txt(ruta="relacionescartas.txt"):
     """
@@ -24,7 +25,12 @@ def cargar_fusiones_desde_txt(ruta="relacionescartas.txt"):
                 continue
 
             izquierda, derecha = linea.split("-->")
-            paquete_id = int(izquierda.replace("Paquete", "").strip())
+            match = re.search(r"\d+", izquierda)
+            if not match:
+                raise ValueError(f"No se pudo extraer ID de paquete desde: '{izquierda}'")
+
+                paquete_id = int(match.group())
+
             actividades = {
                 int(x.strip()) for x in derecha.split(",")
             }
