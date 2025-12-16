@@ -23,15 +23,22 @@ def normalizar_estado(estado):
 # Inicialización
 # ==============================
 
-def inicializar_juego():
+def inicializar_juego(estructura):
+    proyectos_ids = list(estructura.keys())
+
     return {
         "ronda": 0,
         "historial": [],
-        "mazos": {"1": [], "2": []},
-        "proyectos": {},
-        "finalizado": False,
+        "mazos": {
+            "1": [],
+            "2": []
+        },
+        "proyectos": {
+            "1": proyectos_ids[0],
+            "2": proyectos_ids[1] if len(proyectos_ids) > 1 else proyectos_ids[0]
+        },
+        "finalizado": False
     }
-
 
 # ==============================
 # Carga estructura
