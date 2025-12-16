@@ -37,37 +37,34 @@ def inicializar_juego():
 # Carga estructura
 # ==============================
 
-def cargar_estructura_proyecto(base_path=None):
-    if base_path is None:
-        base_path = "/mount/src/tfg/imagenes/Proyectos"
+def cargar_estructura_proyecto():
+    base_path = "/mount/src/tfg/imagenes/Proyectos"
+
+    if not os.path.exists(base_path):
+        raise RuntimeError(f"No existe la ruta {base_path}")
 
     estructura = {}
-
-    for pid in sorted(os.listdir(base_path), key=natural_key):
-        ruta = os.path.join(base_path, pid)
-        if not os.path.isdir(ruta):
+    for pid in sorted(os.listdir(base_path)):
+        ruta_proyecto = os.path.join(base_path, pid)
+        if not os.path.isdir(ruta_proyecto):
             continue
 
-        estructura[pid] = {"actividades": []}
+        actividades = []
+        ruta_actividades = os.path.join(
+            ruta_proyecto, "Entregables", "Paquete trabajo", "Actividades"
+        )
 
-        entregables = os.path.join(ruta, "Entregables")
-        if not os.path.isdir(entregables):
-            continue
+        if os.path.exists(ruta_actividades):
+            for f in os.listdir(ruta_actividades):
+                if f.lower().endswith(".jpg"):
+                    actividades.append(os.path.join(ruta_actividades, f))
 
-        for eid in sorted(os.listdir(entregables), key=natural_key):
-            act_path = os.path.join(
-                entregables, eid, "Paquete trabajo", "Actividades"
-            )
-            if not os.path.isdir(act_path):
-                continue
-
-            for f in sorted(os.listdir(act_path), key=natural_key):
-                if f.lower().endswith((".jpg", ".png")):
-                    estructura[pid]["actividades"].append(
-                        os.path.join(act_path, f)
-                    )
+        estructura[pid] = {
+            "actividades": actividades
+        }
 
     return estructura
+
 
 
 # ==============================
