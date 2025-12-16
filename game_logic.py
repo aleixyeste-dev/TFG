@@ -1,7 +1,7 @@
 import os
 import random
 import re
-import copy
+
 # ==============================
 # Utilidades
 # ==============================
@@ -23,22 +23,15 @@ def normalizar_estado(estado):
 # Inicialización
 # ==============================
 
-def inicializar_juego(estructura):
-    proyectos_ids = list(estructura.keys())
-
+def inicializar_juego():
     return {
         "ronda": 0,
         "historial": [],
-        "mazos": {
-            "1": [],
-            "2": []
-        },
-        "proyectos": {
-            "1": proyectos_ids[0],
-            "2": proyectos_ids[1] if len(proyectos_ids) > 1 else proyectos_ids[0]
-        },
-        "finalizado": False
+        "mazos": {"1": [], "2": []},
+        "proyectos": {},
+        "finalizado": False,
     }
+
 
 # ==============================
 # Carga estructura
@@ -99,98 +92,32 @@ def fusionar_cartas(mazo, agrupaciones):
 # Ronda
 # ==============================
 
-import copy
-import random
-
 def siguiente_ronda(estado, estructura, agrupaciones):
-    nuevo_estado = copy.deepcopy(estado)
+    estado = normalizar_estado(estado.copy())
     eventos = []
 
-    if nuevo_estado.get("finalizado"):
-        return nuevo_estado, eventos
+    # Asignar proyectos si no existen
+    if not estado["proyectos"]:
+        proyectos = list(estructura.keys())
+        estado["proyectos"] = {
+            "1": random.choice(proyectos),
+            "2": random.choice(proyectos),
+        }
 
-    # avanzar ronda
-    nuevo_estado["ronda"] += 1
+    estado["ronda"] += 1
 
-    # asegurar estructura de mazos
-    for equipo in ["1", "2"]:
-        if equipo not in nuevo_estado["mazos"]:
-            nuevo_estado["mazos"][equipo] = []
+    for equipo, proyecto in estado["proyectos"].items():
+        actividades = estructura.get(proyecto, {}).get("actividades", [])
 
-    # 🔹 REPARTO DE CARTAS (CLARO Y DIRECTO)
-    for equipo in ["1", "2"]:
-        proyecto_id = nuevo_estado["proyectos"].get(equipo)
+        disponibles = [a for a in actividades if a not in estado["historial"]]
+        if not disponibles:
+            disponibles = actividades.copy()
 
-        if not proyecto_id:
-            continue
+        if disponibles:
+            robadas = random.sample(disponibles, min(4, len(disponibles)))
+            estado["mazos"][equipo].extend(robadas)
+            estado["historial"].extend(robadas)
+            eventos.append(f"Equipo {equipo} roba {len(robadas)} cartas")
 
-        # cartas disponibles del proyecto
-        cartas_proyecto = [
-            info["carta"]
-            for key, info in agrupaciones["actividades_a_paquete"].items()
-            if key.startswith(f"{proyecto_id}_")
-        ]
-
-        if not cartas_proyecto:
-            continue
-
-        carta = random.choice(cartas_proyecto)
-        nuevo_estado["mazos"][equipo].append(carta)
-
-        eventos.append({
-            "tipo": "robo",
-            "equipo": equipo,
-            "carta": carta
-        })
-
-    return nuevo_estado, eventos
-
-
-
-
-def fusiones_disponibles(mazo, agrupaciones):
-    """
-    Devuelve una lista de fusiones posibles a partir del mazo actual
-    """
-    fusiones = []
-
-    if not mazo:
-        return fusiones
-
-    # Convertimos el mazo a IDs
-    ids_mazo = {obtener_id_carta(carta): carta for carta in mazo}
-
-    # ACTIVIDADES -> PAQUETE
-    for key, info in agrupaciones["actividades_a_paquete"].items():
-        actividades = info["actividades"]
-
-        if all(a in ids_mazo for a in actividades):
-            fusiones.append({
-                "tipo": "actividades_a_paquete",
-                "resultado": info["carta"],
-                "consume": [ids_mazo[a] for a in actividades]
-            })
-
-    # PAQUETES -> ENTREGABLE
-    for key, info in agrupaciones["paquetes_a_entregable"].items():
-        paquetes = info["paquetes"]
-
-        if all(p in mazo for p in paquetes):
-            fusiones.append({
-                "tipo": "paquetes_a_entregable",
-                "resultado": info["carta"],
-                "consume": paquetes
-            })
-
-    return fusiones
-
-
-
-
-def obtener_id_carta(ruta):
-    """
-    Extrae el ID de la carta a partir de la ruta de la imagen
-    Ejemplo: /path/Actividades/76.jpg -> 76
-    """
-    return ruta.split("/")[-1].replace(".jpg", "")
+    return estado, eventos
 
