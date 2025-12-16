@@ -80,7 +80,7 @@ def mostrar_fusiones(col, equipo):
 
         mazo = estado["mazos"].get(str(equipo), [])
 
-        if not mazo:
+        if not isinstance(mazo, list) or not mazo:
             st.info("No hay cartas para fusionar")
             return
 
@@ -94,6 +94,7 @@ def mostrar_fusiones(col, equipo):
 
         for paquete_id in fusiones:
             st.success(f"Paquete {paquete_id} disponible")
+
 
 
 
