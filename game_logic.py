@@ -93,11 +93,6 @@ def fusionar_cartas(mazo, agrupaciones):
 # ==============================
 
 def siguiente_ronda(estado, estructura, agrupaciones):
-import random
-import copy
-
-
-def siguiente_ronda(estado, estructura, agrupaciones):
     nuevo_estado = copy.deepcopy(estado)
     eventos = []
 
