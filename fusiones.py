@@ -3,24 +3,18 @@ import os
 
 RUTA_TXT = "relacionescartas.txt"
 
-
 def cargar_fusiones_desde_txt():
-    ruta = RUTA_TXT
-
-    if not os.path.exists(ruta):
-        raise FileNotFoundError(f"No se encuentra {ruta}")
-
     fusiones = {}
 
-    with open(ruta, "r", encoding="utf-8") as f:
+    if not os.path.exists(RUTA_TXT):
+        raise FileNotFoundError(f"No se encuentra {RUTA_TXT}")
+
+    with open(RUTA_TXT, "r", encoding="utf-8") as f:
         for linea in f:
             linea = linea.strip()
-
-            # Saltar líneas vacías o comentarios
-            if not linea or linea.startswith("#"):
+            if not linea:
                 continue
 
-            # 👇 ESTA ES LA LÍNEA CLAVE CORREGIDA
             izquierda, derecha = linea.split(":", 1)
 
             paquete_id = int(
@@ -36,5 +30,5 @@ def cargar_fusiones_desde_txt():
     return fusiones
 
 
-# Se carga UNA VEZ al importar el módulo
 FUSIONES_PAQUETES = cargar_fusiones_desde_txt()
+
