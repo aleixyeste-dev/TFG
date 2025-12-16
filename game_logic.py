@@ -85,7 +85,26 @@ def generar_diccionario_agrupaciones(estructura):
 
 def fusionar_cartas(mazo, agrupaciones):
     eventos = []
+    fusiones = fusiones_disponibles(mazo, agrupaciones)
+
+    if not fusiones:
+        return mazo, eventos
+
+    # Ejecutar SOLO una fusión por ronda
+    fusion = fusiones[0]
+
+    for carta in fusion["cartas"]:
+        mazo.remove(carta)
+
+    carta_fusionada = fusion["resultado"]
+    mazo.append(carta_fusionada)
+
+    eventos.append(
+        f"Fusión realizada: {len(fusion['cartas'])} cartas → paquete"
+    )
+
     return mazo, eventos
+
 
 
 # ==============================
@@ -120,4 +139,64 @@ def siguiente_ronda(estado, estructura, agrupaciones):
             eventos.append(f"Equipo {equipo} roba {len(robadas)} cartas")
 
     return estado, eventos
+
+
+
+import os
+
+from fusiones import FUSIONES_PAQUETES
+
+
+def obtener_id_carta(ruta):
+    """
+    Extrae el ID numérico de una carta desde la ruta de la imagen
+    """
+    return int(ruta.split("/")[-1].replace(".jpg", ""))
+
+
+def fusiones_disponibles(mazo):
+    """
+    Devuelve una lista de paquetes que pueden fusionarse con el mazo actual
+    """
+    ids_mazo = {obtener_id_carta(c) for c in mazo}
+    disponibles = []
+
+    for paquete_id, actividades in FUSIONES_PAQUETES.items():
+        if actividades.issubset(ids_mazo):
+            disponibles.append({
+                "paquete": paquete_id,
+                "actividades": actividades
+            })
+
+    return disponibles
+
+import os
+
+
+def ruta_paquete(paquete_id):
+    """
+    Construye la ruta de la imagen del paquete de trabajo
+    Ajusta la ruta si tus imágenes están en otra carpeta
+    """
+    return f"/mount/src/tfg/imagenes/Paquetes/{paquete_id}.jpg"
+
+
+def aplicar_fusion(estado, equipo, paquete_id):
+    """
+    Aplica una fusión:
+    - Elimina las actividades del paquete
+    - Añade la carta del paquete
+    """
+    mazo = estado["mazos"][str(equipo)]
+    actividades = FUSIONES_PAQUETES[paquete_id]
+
+    nuevo_mazo = []
+    for carta in mazo:
+        if obtener_id_carta(carta) not in actividades:
+            nuevo_mazo.append(carta)
+
+    nuevo_mazo.append(ruta_paquete(paquete_id))
+    estado["mazos"][str(equipo)] = nuevo_mazo
+
+    return estado
 

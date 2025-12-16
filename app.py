@@ -4,7 +4,9 @@ from game_logic import (
     inicializar_juego,
     siguiente_ronda,
     cargar_estructura_proyecto,
-    generar_diccionario_agrupaciones
+    generar_diccionario_agrupaciones,
+    fusiones_disponibles,
+    aplicar_fusion
 )
 # ---------------------------------
 # CONFIGURACIÓN
@@ -72,13 +74,48 @@ def mostrar_equipo(col, equipo):
             st.image(carta, width=160)
 
 
+def mostrar_fusiones(col, equipo, estado):
+    mazo = estado["mazos"].get(str(equipo), [])
+    fusiones = fusiones_disponibles(mazo)
+
+    with col:
+        st.markdown("### 🔗 Fusiones disponibles")
+
+        if not fusiones:
+            st.caption("No hay fusiones posibles")
+            return
+
+        for f in fusiones:
+            paquete_id = f["paquete"]
+
+            if st.button(
+                f"Fusionar Paquete {paquete_id}",
+                key=f"fusion_{equipo}_{paquete_id}"
+            ):
+                nuevo_estado = aplicar_fusion(
+                    estado,
+                    equipo,
+                    paquete_id
+                )
+                st.session_state.estado = nuevo_estado
+                st.rerun()
+
+
+
+
 col1, col2 = st.columns(2)
+
 mostrar_equipo(col1, 1)
+mostrar_fusiones(col1, 1)
+
 mostrar_equipo(col2, 2)
+mostrar_fusiones(col2, 2)
 
 # ---------------------------------
 # DEBUG
 # ---------------------------------
 with st.expander("ℹ️ Estado interno (debug)"):
     st.json(estado)
+
+
 
