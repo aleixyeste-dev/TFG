@@ -1,32 +1,31 @@
 # fusiones.py
 import os
 
-def cargar_fusiones_desde_txt():
-    """
-    Devuelve un dict:
-    {
-        15: [47,48,49,50],
-        16: [51,52,53,54],
-        ...
-    }
-    """
-    fusiones = {}
+RUTA_TXT = "relacionescartas.txt"
 
-    ruta = os.path.join(os.path.dirname(__file__), "relacionescartas.txt")
+
+def cargar_fusiones_desde_txt():
+    ruta = RUTA_TXT
 
     if not os.path.exists(ruta):
-        raise FileNotFoundError(f"No se encuentra el archivo: {ruta}")
+        raise FileNotFoundError(f"No se encuentra {ruta}")
+
+    fusiones = {}
 
     with open(ruta, "r", encoding="utf-8") as f:
         for linea in f:
             linea = linea.strip()
+
+            # Saltar líneas vacías o comentarios
             if not linea or linea.startswith("#"):
                 continue
 
-            # Ejemplo línea:
-            # Paquete 15: 47,48,49,50
-            izquierda, derecha = linea.split(":")
-            paquete_id = int(izquierda.replace("Paquete", "").strip())
+            # 👇 ESTA ES LA LÍNEA CLAVE CORREGIDA
+            izquierda, derecha = linea.split(":", 1)
+
+            paquete_id = int(
+                izquierda.replace("Paquete", "").strip()
+            )
 
             actividades = [
                 int(x.strip()) for x in derecha.split(",")
@@ -37,5 +36,5 @@ def cargar_fusiones_desde_txt():
     return fusiones
 
 
-# ✅ ESTA LÍNEA ES CLAVE
+# Se carga UNA VEZ al importar el módulo
 FUSIONES_PAQUETES = cargar_fusiones_desde_txt()
