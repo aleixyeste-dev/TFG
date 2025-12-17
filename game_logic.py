@@ -197,3 +197,53 @@ def aplicar_fusion(estado, equipo, paquete_id):
 
     return estado
 
+
+def ejecutar_fusion(estado, equipo, paquete_id):
+    """
+    Ejecuta la fusión de un paquete para un equipo:
+    - elimina las cartas usadas
+    - registra el paquete
+    - añade evento al historial
+    """
+    nuevo_estado = copy.deepcopy(estado)
+
+    mazo = nuevo_estado["mazos"][str(equipo)]
+    actividades_necesarias = FUSIONES_PAQUETES[paquete_id]
+
+    # Convertimos el mazo a ids
+    ids_mazo = [extraer_id_actividad(c) for c in mazo]
+
+    # Verificación de seguridad
+    if not actividades_necesarias.issubset(set(ids_mazo)):
+        return estado, False  # no se puede ejecutar
+
+    # Eliminar cartas usadas
+    nuevas_cartas = []
+    usados = set(actividades_necesarias)
+
+    for carta in mazo:
+        cid = extraer_id_actividad(carta)
+        if cid not in usados:
+            nuevas_cartas.append(carta)
+
+    nuevo_estado["mazos"][str(equipo)] = nuevas_cartas
+
+    # Registrar proyecto completado
+    nuevo_estado.setdefault("proyectos_completados", {}).setdefault(str(equipo), [])
+    nuevo_estado["proyectos_completados"][str(equipo)].append(paquete_id)
+
+    # Historial
+    nuevo_estado["historial"].append(
+        f"Equipo {equipo} completó el paquete {paquete_id}"
+    )
+
+    return nuevo_estado, True
+
+
+def extraer_id_actividad(ruta):
+    """
+    Extrae el número de actividad desde la ruta de la imagen
+    Ej: Actividades/128.jpg -> 128
+    """
+    nombre = ruta.split("/")[-1]
+    return int(nombre.replace(".jpg", ""))

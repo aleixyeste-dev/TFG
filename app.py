@@ -78,23 +78,27 @@ def mostrar_fusiones(col, equipo):
     with col:
         st.subheader("Fusiones posibles")
 
+        estado = st.session_state.estado
         mazo = estado["mazos"].get(str(equipo), [])
-
-        if not isinstance(mazo, list) or not mazo:
-            st.info("No hay cartas para fusionar")
-            return
-
-        from game_logic import fusiones_disponibles
 
         fusiones = fusiones_disponibles(mazo)
 
         if not fusiones:
-            st.info("No hay fusiones disponibles")
+            st.info("No hay cartas para fusionar")
             return
 
         for paquete_id in fusiones:
-            st.success(f"Paquete {paquete_id} disponible")
+            if st.button(
+                f"Fusionar paquete {paquete_id}",
+                key=f"fusion_{equipo}_{paquete_id}"
+            ):
+                nuevo_estado, ok = ejecutar_fusion(
+                    estado, equipo, paquete_id
+                )
 
+                if ok:
+                    st.session_state.estado = nuevo_estado
+                    st.experimental_rerun()
 
 
 
