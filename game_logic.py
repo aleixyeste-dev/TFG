@@ -113,34 +113,42 @@ def fusionar_cartas(mazo, agrupaciones):
 # Ronda
 # ==============================
 
-def siguiente_ronda(estado, estructura, agrupaciones):
-    estado = normalizar_estado(estado.copy())
+def siguiente_ronda(estado, estructura, agrupaciones=None):
+    import random
+    import copy
+
+    nuevo_estado = copy.deepcopy(estado)
     eventos = []
 
-    # Asignar proyectos si no existen
-    if not estado["proyectos"]:
-        proyectos = list(estructura.keys())
-        estado["proyectos"] = {
-            "1": random.choice(proyectos),
-            "2": random.choice(proyectos),
-        }
+    nuevo_estado["ronda"] += 1
 
-    estado["ronda"] += 1
+    for equipo, proyecto_id in nuevo_estado["proyectos"].items():
+        equipo = str(equipo)
 
-    for equipo, proyecto in estado["proyectos"].items():
-        actividades = estructura.get(proyecto, {}).get("actividades", [])
+        if proyecto_id not in estructura:
+            continue
 
-        disponibles = [a for a in actividades if a not in estado["historial"]]
+        actividades = estructura[proyecto_id]["actividades"]
+
+        disponibles = [
+            a for a in actividades
+            if a not in nuevo_estado["historial"]
+        ]
+
         if not disponibles:
-            disponibles = actividades.copy()
+            continue
 
-        if disponibles:
-            robadas = random.sample(disponibles, min(4, len(disponibles)))
-            estado["mazos"][equipo].extend(robadas)
-            estado["historial"].extend(robadas)
-            eventos.append(f"Equipo {equipo} roba {len(robadas)} cartas")
+        carta = random.choice(disponibles)
 
-    return estado, eventos
+        nuevo_estado["mazos"][equipo].append(carta)
+        nuevo_estado["historial"].append(carta)
+
+        eventos.append(
+            f"Equipo {equipo} recibe carta {carta}"
+        )
+
+    return nuevo_estado, eventos
+
 
 
 
