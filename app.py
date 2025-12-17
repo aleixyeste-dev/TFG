@@ -7,7 +7,7 @@ from game_logic import (
     generar_diccionario_agrupaciones,
     fusiones_disponibles,
     aplicar_fusion,
-    ejectuar_fusion
+    ejecutar_fusion
 )
 # ---------------------------------
 # CONFIGURACIÓN
