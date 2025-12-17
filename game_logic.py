@@ -2,6 +2,7 @@ import os
 import random
 import re
 import fusiones
+import copy
 
 FUSIONES_PAQUETES = fusiones.FUSIONES_PAQUETES
 # ==============================
