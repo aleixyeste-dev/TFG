@@ -123,7 +123,8 @@ def siguiente_ronda(estado, estructura, agrupaciones=None):
     nuevo_estado["ronda"] += 1
 
     for equipo, proyecto_id in nuevo_estado["proyectos"].items():
-        equipo = str(equipo)
+        equipo = str(equipo)              # "1" / "2"
+        proyecto_id = int(proyecto_id)    # 🔥 CLAVE
 
         if proyecto_id not in estructura:
             continue
