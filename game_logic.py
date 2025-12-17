@@ -206,14 +206,7 @@ def ejecutar_fusion(estado, equipo, paquete_id):
     - registra el paquete
     - añade evento al historial
     """
-     if paquete_id is None:
-        return estado, False
-
-    try:
-        paquete_id = int(paquete_id)
-    except (TypeError, ValueError):
-        return estado, False
-
+    paquete_id = int(paquete_id)
     nuevo_estado = copy.deepcopy(estado)
 
     mazo = nuevo_estado["mazos"][str(equipo)]

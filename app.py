@@ -7,7 +7,7 @@ from game_logic import (
     generar_diccionario_agrupaciones,
     fusiones_disponibles,
     aplicar_fusion,
-    ejecutar_fusion
+    ejectuar_fusion
 )
 # ---------------------------------
 # CONFIGURACIÓN
@@ -88,20 +88,20 @@ def mostrar_fusiones(col, equipo):
             st.info("No hay cartas para fusionar")
             return
 
-        for paquete_id, actividades in fusiones.items():
+        for paquete_id in fusiones:
             if st.button(
                 f"Fusionar paquete {paquete_id}",
                 key=f"fusion_{equipo}_{paquete_id}"
-    ):
+            ):
                 nuevo_estado, ok = ejecutar_fusion(
                     estado, equipo, paquete_id
-        )
+                )
 
                 if ok:
                     st.session_state.estado = nuevo_estado
-                    st.rerun()
+                    st.experimental_rerun()
 
-        
+
 
 
 col1, col2 = st.columns(2)
