@@ -101,7 +101,7 @@ def mostrar_fusiones(col, equipo):
 
                 if ok:
                     st.session_state.estado = nuevo_estado
-                    st.experimental_rerun()
+                    st.rerun()
 
 
 
