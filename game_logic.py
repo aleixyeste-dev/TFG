@@ -202,32 +202,25 @@ def aplicar_fusion(estado, equipo, paquete_id):
 def ejecutar_fusion(estado, equipo, paquete_id):
     paquete_id = int(paquete_id)
     nuevo_estado = copy.deepcopy(estado)
-    equipo = str(equipo)
-    paquete_id = int(paquete_id)
 
-# Inicializar proyectos si no existe
-    if "proyectos" not in nuevo_estado:
-        nuevo_estado["proyectos"] = {}
-
-# Guardar el paquete fusionado
-    nuevo_estado["proyectos"].setdefault(equipo, [])
-    nuevo_estado["proyectos"][equipo].append(paquete_id)
-
-
-    mazo = nuevo_estado["mazos"][str(equipo)]
     actividades_necesarias = FUSIONES_PAQUETES[paquete_id]
+    mazo = nuevo_estado["mazos"][str(equipo)]
 
-    # quitar actividades usadas
-    nuevo_mazo = []
-    for carta in mazo:
-        carta_id = int(carta.split("/")[-1].replace(".jpg", ""))
-        if carta_id not in actividades_necesarias:
-            nuevo_mazo.append(carta)
+    # Quitar actividades usadas
+    nuevo_estado["mazos"][str(equipo)] = [
+        c for c in mazo if extraer_id_actividad(c) not in actividades_necesarias
+    ]
 
-    nuevo_estado["mazos"][str(equipo)] = nuevo_mazo
-    nuevo_estado["proyectos"][str(equipo)] = paquete_id
+    # Guardar proyecto (paquete fusionado)
+    ruta_paquete = (
+        f"imagenes/Proyectos/{estado['proyecto_actual']}"
+        f"/Entregables/Paquetes trabajo/{paquete_id}.jpg"
+    )
+
+    nuevo_estado["proyectos"].setdefault(str(equipo), []).append(ruta_paquete)
 
     return nuevo_estado, True
+
 
 
 def extraer_id_actividad(ruta):

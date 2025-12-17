@@ -108,14 +108,13 @@ def mostrar_proyectos(col, equipo):
     with col:
         st.subheader("Paquetes completados")
 
-        proyectos = estado.get("proyectos", {}).get(str(equipo), [])
+        proyectos = estado["proyectos"].get(str(equipo), [])
 
         if not proyectos:
-            st.info("Aún no hay paquetes completados")
+            st.info("Todavía no hay paquetes completados")
             return
 
-        for paquete_id in proyectos:
-            ruta = f"/mount/src/tfg/imagenes/Proyectos/Paquete_{paquete_id}.jpg"
+        for ruta in proyectos:
             st.image(ruta, width=180)
 
 
