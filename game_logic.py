@@ -159,7 +159,7 @@ def fusiones_disponibles(mazo):
     disponibles = []
 
     for paquete_id, actividades in FUSIONES_PAQUETES.items():
-        if actividades.issubset(ids_mazo):
+        if set(actividades).issubset(ids_mazo):
             disponibles.append({
                 "paquete": paquete_id,
                 "actividades": actividades
