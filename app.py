@@ -104,15 +104,32 @@ def mostrar_fusiones(col, equipo):
                     st.rerun()
 
 
+def mostrar_proyectos(col, equipo):
+    with col:
+        st.subheader("Paquetes completados")
+
+        proyectos = estado.get("proyectos", {}).get(str(equipo), [])
+
+        if not proyectos:
+            st.info("Aún no hay paquetes completados")
+            return
+
+        for paquete_id in proyectos:
+            ruta = f"/mount/src/tfg/imagenes/Proyectos/Paquete_{paquete_id}.jpg"
+            st.image(ruta, width=180)
+
 
 
 col1, col2 = st.columns(2)
 
 mostrar_equipo(col1, 1)
 mostrar_fusiones(col1, 1)
+mostrar_proyectos(col1, 1)
 
 mostrar_equipo(col2, 2)
 mostrar_fusiones(col2, 2)
+mostrar_proyectos(col2, 2)
+
 
 # ---------------------------------
 # DEBUG

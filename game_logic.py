@@ -202,6 +202,17 @@ def aplicar_fusion(estado, equipo, paquete_id):
 def ejecutar_fusion(estado, equipo, paquete_id):
     paquete_id = int(paquete_id)
     nuevo_estado = copy.deepcopy(estado)
+    equipo = str(equipo)
+    paquete_id = int(paquete_id)
+
+# Inicializar proyectos si no existe
+    if "proyectos" not in nuevo_estado:
+        nuevo_estado["proyectos"] = {}
+
+# Guardar el paquete fusionado
+    nuevo_estado["proyectos"].setdefault(equipo, [])
+    nuevo_estado["proyectos"][equipo].append(paquete_id)
+
 
     mazo = nuevo_estado["mazos"][str(equipo)]
     actividades_necesarias = FUSIONES_PAQUETES[paquete_id]
