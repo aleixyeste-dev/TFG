@@ -200,44 +200,21 @@ def aplicar_fusion(estado, equipo, paquete_id):
 
 
 def ejecutar_fusion(estado, equipo, paquete_id):
-    """
-    Ejecuta la fusión de un paquete para un equipo:
-    - elimina las cartas usadas
-    - registra el paquete
-    - añade evento al historial
-    """
     paquete_id = int(paquete_id)
     nuevo_estado = copy.deepcopy(estado)
 
     mazo = nuevo_estado["mazos"][str(equipo)]
     actividades_necesarias = FUSIONES_PAQUETES[paquete_id]
 
-    # Convertimos el mazo a ids
-    ids_mazo = [extraer_id_actividad(c) for c in mazo]
-
-    # Verificación de seguridad
-    if not actividades_necesarias.issubset(set(ids_mazo)):
-        return estado, False  # no se puede ejecutar
-
-    # Eliminar cartas usadas
-    nuevas_cartas = []
-    usados = set(actividades_necesarias)
-
+    # quitar actividades usadas
+    nuevo_mazo = []
     for carta in mazo:
-        cid = extraer_id_actividad(carta)
-        if cid not in usados:
-            nuevas_cartas.append(carta)
+        carta_id = int(carta.split("/")[-1].replace(".jpg", ""))
+        if carta_id not in actividades_necesarias:
+            nuevo_mazo.append(carta)
 
-    nuevo_estado["mazos"][str(equipo)] = nuevas_cartas
-
-    # Registrar proyecto completado
-    nuevo_estado.setdefault("proyectos_completados", {}).setdefault(str(equipo), [])
-    nuevo_estado["proyectos_completados"][str(equipo)].append(paquete_id)
-
-    # Historial
-    nuevo_estado["historial"].append(
-        f"Equipo {equipo} completó el paquete {paquete_id}"
-    )
+    nuevo_estado["mazos"][str(equipo)] = nuevo_mazo
+    nuevo_estado["proyectos"][str(equipo)] = paquete_id
 
     return nuevo_estado, True
 
