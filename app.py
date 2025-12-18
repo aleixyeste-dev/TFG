@@ -104,6 +104,8 @@ def mostrar_fusiones(col, equipo):
                     st.rerun()
 
 
+import os
+
 def mostrar_proyectos(col, equipo):
     with col:
         st.subheader("Paquetes completados")
@@ -115,7 +117,11 @@ def mostrar_proyectos(col, equipo):
             return
 
         for ruta in proyectos:
-            st.image(ruta, width=180)
+            if os.path.exists(ruta):
+                st.image(ruta, width=180)
+            else:
+                st.error(f"Imagen no encontrada: {ruta}")
+
 
 
 

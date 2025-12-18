@@ -4,6 +4,8 @@ import re
 import fusiones
 import copy
 
+BASE_IMG = "imagenes"
+
 FUSIONES_PAQUETES = fusiones.FUSIONES_PAQUETES
 # ==============================
 # Utilidades
@@ -199,6 +201,8 @@ def aplicar_fusion(estado, equipo, paquete_id):
     return estado
 
 
+BASE_IMG = "imagenes"
+
 def ejecutar_fusion(estado, equipo, paquete_id):
     paquete_id = int(paquete_id)
     nuevo_estado = copy.deepcopy(estado)
@@ -211,15 +215,16 @@ def ejecutar_fusion(estado, equipo, paquete_id):
         c for c in mazo if extraer_id_actividad(c) not in actividades_necesarias
     ]
 
-    # Guardar proyecto (paquete fusionado)
+    # ✅ RUTA CORRECTA DEL PAQUETE
     ruta_paquete = (
-        f"imagenes/Proyectos/{estado['proyecto_actual']}"
-        f"/Entregables/Paquetes trabajo/{paquete_id}.jpg"
+        f"{BASE_IMG}/Proyectos/1/Entregables/Paquete trabajo/{paquete_id}.jpg"
     )
 
     nuevo_estado["proyectos"].setdefault(str(equipo), []).append(ruta_paquete)
 
     return nuevo_estado, True
+
+
 
 
 
