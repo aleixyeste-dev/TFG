@@ -1,11 +1,12 @@
-import os
 import random
 import re
 import fusiones
+import os
 import copy
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 IMG_DIR = os.path.join(BASE_DIR, "imagenes")
+
 
 
 FUSIONES_PAQUETES = fusiones.FUSIONES_PAQUETES
@@ -172,8 +173,6 @@ def fusiones_disponibles(mazo):
 
     return disponibles
 
-import os
-
 def ruta_paquete(paquete_id):
     return os.path.join(
         IMG_DIR,
@@ -222,9 +221,6 @@ def ejecutar_fusion(estado, equipo, paquete_id):
     ]
 
     # ✅ RUTA CORRECTA DEL PAQUETE
-    ruta_paquete = (
-        f"{BASE_IMG}/Proyectos/1/Entregables/Paquete trabajo/{paquete_id}.jpg"
-    )
 
     ruta = ruta_paquete(paquete_id)
     nuevo_estado["proyectos"].setdefault(str(equipo), []).append(ruta)
