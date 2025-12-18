@@ -122,10 +122,11 @@ def mostrar_proyectos(col, equipo):
             return
 
         for ruta in proyectos:
-            if os.path.isfile(ruta):
+            if isinstance(ruta, str) and os.path.exists(ruta):
                 st.image(ruta, width=180)
             else:
-                st.error(f"❌ Imagen no encontrada:\n{ruta}")
+                st.error(f"Imagen no encontrada: {ruta}")
+
 
 
 

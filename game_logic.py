@@ -205,30 +205,42 @@ def aplicar_fusion(estado, equipo, paquete_id):
 
     return estado
 
+import os
 
-BASE_IMG = "imagenes"
+def obtener_ruta_paquete(paquete_id, equipo):
+    return os.path.join(
+        "imagenes",
+        "Proyectos",
+        str(equipo),
+        "Entregables",
+        "Paquete trabajo",
+        f"{paquete_id}.jpg"
+    )
+
 
 def ejecutar_fusion(estado, equipo, paquete_id):
-    paquete_id = int(paquete_id)
+    import copy
+
     nuevo_estado = copy.deepcopy(estado)
+    equipo = str(equipo)
+    paquete_id = int(paquete_id)
 
     actividades_necesarias = FUSIONES_PAQUETES[paquete_id]
-    mazo = nuevo_estado["mazos"][str(equipo)]
 
-    # Quitar actividades usadas
-    nuevo_estado["mazos"][str(equipo)] = [
-        c for c in mazo if extraer_id_actividad(c) not in actividades_necesarias
+    # eliminar actividades usadas
+    nuevo_estado["mazos"][equipo] = [
+        c for c in nuevo_estado["mazos"][equipo]
+        if extraer_id(c) not in actividades_necesarias
     ]
 
-    # ✅ RUTA CORRECTA DEL PAQUETE
+    # ✅ generar ruta correcta del paquete
+    ruta = obtener_ruta_paquete(paquete_id, equipo)
 
-    ruta = ruta_paquete(paquete_id)
-    if "proyectos" not in nuevo_estado or not isinstance(nuevo_estado["proyectos"], dict):
-        nuevo_estado["proyectos"] = {}
-        nuevo_estado["proyectos"].setdefault(str(equipo), []).append(ruta)
-
+    # guardar paquete completado
+    nuevo_estado["proyectos"].setdefault(equipo, []).append(ruta)
 
     return nuevo_estado, True
+
 
 
 
