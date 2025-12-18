@@ -223,7 +223,9 @@ def ejecutar_fusion(estado, equipo, paquete_id):
     # ✅ RUTA CORRECTA DEL PAQUETE
 
     ruta = ruta_paquete(paquete_id)
-    nuevo_estado["proyectos"].setdefault(str(equipo), []).append(ruta)
+    if "proyectos" not in nuevo_estado or not isinstance(nuevo_estado["proyectos"], dict):
+        nuevo_estado["proyectos"] = {}
+        nuevo_estado["proyectos"].setdefault(str(equipo), []).append(ruta)
 
 
     return nuevo_estado, True
