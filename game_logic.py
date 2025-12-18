@@ -4,7 +4,9 @@ import re
 import fusiones
 import copy
 
-BASE_IMG = "imagenes"
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+IMG_DIR = os.path.join(BASE_DIR, "imagenes")
+
 
 FUSIONES_PAQUETES = fusiones.FUSIONES_PAQUETES
 # ==============================
@@ -184,6 +186,7 @@ def ruta_paquete(paquete_id):
 
 
 
+
 def aplicar_fusion(estado, equipo, paquete_id):
     """
     Aplica una fusión:
@@ -223,7 +226,9 @@ def ejecutar_fusion(estado, equipo, paquete_id):
         f"{BASE_IMG}/Proyectos/1/Entregables/Paquete trabajo/{paquete_id}.jpg"
     )
 
-    nuevo_estado["proyectos"].setdefault(str(equipo), []).append(ruta_paquete)
+    ruta = ruta_paquete(paquete_id)
+    nuevo_estado["proyectos"].setdefault(str(equipo), []).append(ruta)
+
 
     return nuevo_estado, True
 
