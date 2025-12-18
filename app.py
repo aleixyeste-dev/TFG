@@ -1,4 +1,9 @@
 import streamlit as st
+import os
+
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+IMG_DIR = os.path.join(BASE_DIR, "imagenes")
+
 
 from game_logic import (
     inicializar_juego,
@@ -117,10 +122,11 @@ def mostrar_proyectos(col, equipo):
             return
 
         for ruta in proyectos:
-            if os.path.exists(ruta):
+            if os.path.isfile(ruta):
                 st.image(ruta, width=180)
             else:
-                st.error(f"Imagen no encontrada: {ruta}")
+                st.error(f"❌ Imagen no encontrada:\n{ruta}")
+
 
 
 

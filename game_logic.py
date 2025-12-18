@@ -172,13 +172,16 @@ def fusiones_disponibles(mazo):
 
 import os
 
-
 def ruta_paquete(paquete_id):
-    """
-    Construye la ruta de la imagen del paquete de trabajo
-    Ajusta la ruta si tus imágenes están en otra carpeta
-    """
-    return f"/mount/src/tfg/imagenes/Paquetes/{paquete_id}.jpg"
+    return os.path.join(
+        IMG_DIR,
+        "Proyectos",
+        "1",
+        "Entregables",
+        "Paquete trabajo",
+        f"{paquete_id}.jpg"
+    )
+
 
 
 def aplicar_fusion(estado, equipo, paquete_id):
