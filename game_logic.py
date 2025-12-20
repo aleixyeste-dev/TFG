@@ -253,3 +253,16 @@ def extraer_id_actividad(ruta):
     """
     nombre = ruta.split("/")[-1]
     return int(nombre.replace(".jpg", ""))
+
+import os
+
+def extraer_id(ruta):
+    """
+    Extrae el ID numérico desde una ruta de imagen.
+    Ejemplo:
+    imagenes/Proyectos/1/Entregables/Paquete trabajo/24.jpg -> 24
+    """
+    try:
+        return int(os.path.splitext(os.path.basename(ruta))[0])
+    except Exception:
+        return None
