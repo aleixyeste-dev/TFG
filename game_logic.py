@@ -282,7 +282,7 @@ def extraer_id(ruta):
 from entregables import ENTREGABLES
 
 def entregables_disponibles(paquetes_del_equipo):
-    ids_paquetes = {int(p) for p in paquetes_del_equipo}
+    ids_paquetes = {extraer_id_desde_ruta(p) for p in paquetes_del_equipo}
     posibles = []
 
     for entregable_id, paquetes_necesarios in ENTREGABLES.items():
@@ -313,4 +313,13 @@ def ejecutar_entregable(estado, equipo, entregable_id):
     nuevo_estado["entregables"].setdefault(equipo, []).append(ruta_entregable)
 
     return nuevo_estado, True
+
+def extraer_id_desde_ruta(ruta):
+    """
+    Devuelve el número del archivo sin extensión.
+    Ej: imagenes/.../24.jpg -> 24
+    """
+    import os
+    nombre = os.path.basename(ruta)      # 24.jpg
+    return int(os.path.splitext(nombre)[0])  # 24
 
