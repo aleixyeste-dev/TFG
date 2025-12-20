@@ -12,7 +12,9 @@ from game_logic import (
     generar_diccionario_agrupaciones,
     fusiones_disponibles,
     aplicar_fusion,
-    ejecutar_fusion
+    ejecutar_fusion,
+    entregables_disponibles,
+    ejecutar_entregable
 )
 # ---------------------------------
 # CONFIGURACIÓN
