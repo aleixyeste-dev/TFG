@@ -237,7 +237,13 @@ def ejecutar_fusion(estado, equipo, paquete_id):
     ruta = obtener_ruta_paquete(paquete_id, equipo)
 
     # guardar paquete completado
+    equipo = str(equipo)
+
+    if "proyectos" not in nuevo_estado or not isinstance(nuevo_estado["proyectos"], dict):
+        nuevo_estado["proyectos"] = {}
+
     nuevo_estado["proyectos"].setdefault(equipo, []).append(ruta)
+
 
     return nuevo_estado, True
 
