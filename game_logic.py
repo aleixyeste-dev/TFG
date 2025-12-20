@@ -277,3 +277,40 @@ def extraer_id(ruta):
         return int(os.path.splitext(os.path.basename(ruta))[0])
     except Exception:
         return None
+
+
+from entregables import ENTREGABLES
+
+def entregables_disponibles(paquetes_del_equipo):
+    ids_paquetes = {int(p) for p in paquetes_del_equipo}
+    posibles = []
+
+    for entregable_id, paquetes_necesarios in ENTREGABLES.items():
+        if paquetes_necesarios.issubset(ids_paquetes):
+            posibles.append(entregable_id)
+
+    return posibles
+
+
+def ejecutar_entregable(estado, equipo, entregable_id):
+    nuevo_estado = copy.deepcopy(estado)
+    equipo = str(equipo)
+
+    paquetes_necesarios = ENTREGABLES.get(entregable_id)
+    if not paquetes_necesarios:
+        return estado, False
+
+    # eliminar paquetes usados
+    nuevo_estado["proyectos"].setdefault(equipo, [])
+    nuevo_estado["proyectos"][equipo] = [
+        p for p in nuevo_estado["proyectos"][equipo]
+        if int(p) not in paquetes_necesarios
+    ]
+
+    # añadir entregable
+    ruta_entregable = f"imagenes/Proyectos/1/Entregables/Entregable {entregable_id}.jpg"
+    nuevo_estado.setdefault("entregables", {})
+    nuevo_estado["entregables"].setdefault(equipo, []).append(ruta_entregable)
+
+    return nuevo_estado, True
+

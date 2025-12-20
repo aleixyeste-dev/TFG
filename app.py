@@ -131,17 +131,42 @@ def mostrar_proyectos(col, equipo):
 
 
 
+def mostrar_entregables(col, equipo):
+    with col:
+        st.subheader("Entregables posibles")
+
+        paquetes = estado["proyectos"].get(str(equipo), [])
+        posibles = entregables_disponibles(paquetes)
+
+        if not posibles:
+            st.info("No hay entregables disponibles")
+            return
+
+        for entregable_id in posibles:
+            if st.button(
+                f"Crear Entregable {entregable_id}",
+                key=f"entregable_{equipo}_{entregable_id}"
+            ):
+                nuevo_estado, ok = ejecutar_entregable(
+                    estado, equipo, entregable_id
+                )
+                if ok:
+                    st.session_state.estado = nuevo_estado
+                    st.experimental_rerun()
+
+
 
 col1, col2 = st.columns(2)
 
 mostrar_equipo(col1, 1)
 mostrar_fusiones(col1, 1)
 mostrar_proyectos(col1, 1)
+mostrar_entregables(col1, 1)
 
 mostrar_equipo(col2, 2)
 mostrar_fusiones(col2, 2)
 mostrar_proyectos(col2, 2)
-
+mostrar_entregables(col2, 2)
 
 # ---------------------------------
 # DEBUG
