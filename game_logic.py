@@ -300,11 +300,21 @@ def ejecutar_entregable(estado, equipo, entregable_id):
     if not paquetes_necesarios:
         return estado, False
 
+    paquetes_equipo = nuevo_estado["mazos"].get(equipo, [])
+
+    # comprobar que el equipo tiene TODOS los paquetes necesarios
+    for ruta in paquetes_equipo:
+        paquete_id = extraer_id_desde_ruta(ruta)
+        if paquete_id in paquetes_necesarios:
+            paquetes_necesarios = set(paquetes_necesarios) - {paquete_id}
+
+    if paquetes_necesarios:
+        return estado, False  # faltan paquetes
+
     # eliminar paquetes usados
-    nuevo_estado["proyectos"].setdefault(equipo, [])
-    nuevo_estado["proyectos"][equipo] = [
-        p for p in nuevo_estado["proyectos"][equipo]
-        if int(p) not in paquetes_necesarios
+    nuevo_estado["mazos"][equipo] = [
+        ruta for ruta in paquetes_equipo
+        if extraer_id_desde_ruta(ruta) not in ENTREGABLES[entregable_id]
     ]
 
     # añadir entregable
@@ -313,6 +323,7 @@ def ejecutar_entregable(estado, equipo, entregable_id):
     nuevo_estado["entregables"].setdefault(equipo, []).append(ruta_entregable)
 
     return nuevo_estado, True
+
 
 def extraer_id_desde_ruta(ruta):
     """
