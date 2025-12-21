@@ -27,6 +27,21 @@ def normalizar_estado(estado):
     return estado
 
 
+
+def cargar_proyectos_desde_txt(ruta="relacionesproyectos.txt"):
+    proyectos = {}
+    with open(ruta, encoding="utf-8") as f:
+        for linea in f:
+            if ":" not in linea:
+                continue
+            izq, der = linea.strip().split(":")
+            proyectos[int(izq)] = [int(x) for x in der.split(",")]
+    return proyectos
+
+
+PROYECTOS = cargar_proyectos_desde_txt()
+
+
 # ==============================
 # Inicialización
 # ==============================
@@ -341,4 +356,39 @@ def extraer_id_desde_ruta(ruta):
 def ruta_paquete(paquete_id):
     return f"imagenes/Proyectos/1/Entregables/Paquete trabajo/{paquete_id}.jpg"
 
+
+def proyectos_disponibles(entregables_equipo):
+    ids_entregables = {
+        int(extraer_id(ruta))
+        for ruta in entregables_equipo
+    }
+
+    posibles = []
+    for proyecto_id, necesarios in PROYECTOS.items():
+        if set(necesarios).issubset(ids_entregables):
+            posibles.append(proyecto_id)
+
+    return posibles
+
+
+def ejecutar_proyecto(estado, equipo, proyecto_id):
+    nuevo_estado = copy.deepcopy(estado)
+    equipo = str(equipo)
+
+    entregables_necesarios = PROYECTOS.get(int(proyecto_id))
+    if not entregables_necesarios:
+        return estado, False
+
+    # eliminar entregables usados
+    nuevo_estado["entregables"][equipo] = [
+        ruta for ruta in nuevo_estado["entregables"].get(equipo, [])
+        if int(extraer_id(ruta)) not in entregables_necesarios
+    ]
+
+    # añadir proyecto final
+    ruta_proyecto = f"imagenes/Proyectos/1/{proyecto_id}.jpg"
+    nuevo_estado.setdefault("proyecto_final", {})
+    nuevo_estado["proyecto_final"].setdefault(equipo, []).append(ruta_proyecto)
+
+    return nuevo_estado, True
 

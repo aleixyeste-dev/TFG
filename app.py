@@ -14,7 +14,9 @@ from game_logic import (
     aplicar_fusion,
     ejecutar_fusion,
     entregables_disponibles,
-    ejecutar_entregable
+    ejecutar_entregable,
+    proyectos_disponibles,
+    ejecutar_proyecto
 )
 # ---------------------------------
 # CONFIGURACIÓN
@@ -179,6 +181,41 @@ def mostrar_entregables_creados(col, equipo):
                 st.error(f"Imagen no encontrada: {ruta}")
 
 
+def mostrar_proyectos2(col, equipo):
+    with col:
+        st.subheader("Proyecto final")
+
+        entregables = estado.get("entregables", {}).get(str(equipo), [])
+        posibles = proyectos_disponibles(entregables)
+
+        if not posibles:
+            st.info("No hay proyectos disponibles")
+            return
+
+        for proyecto_id in posibles:
+            if st.button(
+                f"Crear Proyecto {proyecto_id}",
+                key=f"crear_proyecto_{equipo}_{proyecto_id}"
+            ):
+                nuevo_estado, ok = ejecutar_proyecto(
+                    estado, equipo, proyecto_id
+                )
+                if ok:
+                    st.session_state.estado = nuevo_estado
+                    st.experimental_rerun()
+                    
+def mostrar_proyecto_final(col, equipo):
+    with col:
+        st.subheader("Proyecto completado")
+
+        proyectos = estado.get("proyecto_final", {}).get(str(equipo), [])
+        if not proyectos:
+            st.info("Aún no se ha completado el proyecto")
+            return
+
+        for ruta in proyectos:
+            st.image(ruta, width=220)
+
 col1, col2 = st.columns(2)
 
 mostrar_equipo(col1, 1)
@@ -186,12 +223,16 @@ mostrar_fusiones(col1, 1)
 mostrar_proyectos(col1, 1)
 mostrar_entregables(col1, 1)
 mostrar_entregables_creados(col1, 1)
+mostrar_proyectos2(col1, 1)
+mostrar_proyecto_final(col1, 1)
 
 mostrar_equipo(col2, 2)
 mostrar_fusiones(col2, 2)
 mostrar_proyectos(col2, 2)
 mostrar_entregables(col2, 2)
 mostrar_entregables_creados(col2, 2)
+mostrar_proyectos(col2, 2)
+mostrar_proyecto_final(col2, 2)
 
 # ---------------------------------
 # DEBUG
