@@ -295,34 +295,29 @@ def entregables_disponibles(paquetes_del_equipo):
 def ejecutar_entregable(estado, equipo, entregable_id):
     nuevo_estado = copy.deepcopy(estado)
     equipo = str(equipo)
+    entregable_id = str(entregable_id)
 
     paquetes_necesarios = ENTREGABLES.get(entregable_id)
     if not paquetes_necesarios:
         return estado, False
 
-    paquetes_equipo = nuevo_estado["mazos"].get(equipo, [])
-
-    # comprobar que el equipo tiene TODOS los paquetes necesarios
-    for ruta in paquetes_equipo:
-        paquete_id = extraer_id_desde_ruta(ruta)
-        if paquete_id in paquetes_necesarios:
-            paquetes_necesarios = set(paquetes_necesarios) - {paquete_id}
-
-    if paquetes_necesarios:
-        return estado, False  # faltan paquetes
+    # comprobar requisitos
+    paquetes_equipo = nuevo_estado["proyectos"].get(equipo, [])
+    if not set(paquetes_necesarios).issubset(set(paquetes_equipo)):
+        return estado, False
 
     # eliminar paquetes usados
-    nuevo_estado["mazos"][equipo] = [
-        ruta for ruta in paquetes_equipo
-        if extraer_id_desde_ruta(ruta) not in ENTREGABLES[entregable_id]
+    nuevo_estado["proyectos"][equipo] = [
+        p for p in paquetes_equipo
+        if p not in paquetes_necesarios
     ]
 
     # añadir entregable
     ruta_entregable = f"imagenes/Proyectos/1/Entregables/Entregable {entregable_id}.jpg"
-    nuevo_estado.setdefault("entregables", {})
-    nuevo_estado["entregables"].setdefault(equipo, []).append(ruta_entregable)
+    nuevo_estado.setdefault("entregables", {}).setdefault(equipo, []).append(ruta_entregable)
 
     return nuevo_estado, True
+
 
 
 def extraer_id_desde_ruta(ruta):
