@@ -157,7 +157,7 @@ def mostrar_entregables(col, equipo):
 
                 if ok:
                     st.session_state.estado = nuevo_estado
-                    st.experimental()
+                    st.rerun()
                 else:
                     st.warning("❌ No se cumplen los requisitos para este entregable")
 
