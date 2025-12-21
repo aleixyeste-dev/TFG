@@ -282,16 +282,14 @@ def extraer_id(ruta):
 from entregables import ENTREGABLES
 
 def entregables_disponibles(paquetes_del_equipo):
-    disponibles = []
-
-    ids_paquetes = set(paquetes_del_equipo)
+    ids_paquetes = {extraer_id_desde_ruta(p) for p in paquetes_del_equipo}
+    posibles = []
 
     for entregable_id, paquetes_necesarios in ENTREGABLES.items():
-        if set(paquetes_necesarios).issubset(ids_paquetes):
-            disponibles.append(entregable_id)
+        if paquetes_necesarios.issubset(ids_paquetes):
+            posibles.append(entregable_id)
 
-    return disponibles
-
+    return posibles
 
 
 def ejecutar_entregable(estado, equipo, entregable_id):
