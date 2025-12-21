@@ -319,7 +319,7 @@ def ejecutar_entregable(estado, equipo, entregable_id):
 
     # añadir entregable
     ruta_entregable = (
-        f"imagenes/Proyectos/1/Entregables/Entregable {entregable_id}.jpg"
+        f"imagenes/Proyectos/1/Entregables/{entregable_id}.jpg"
     )
 
     nuevo_estado.setdefault("entregables", {}).setdefault(equipo, []).append(ruta_entregable)
