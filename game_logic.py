@@ -295,28 +295,37 @@ def entregables_disponibles(paquetes_del_equipo):
 def ejecutar_entregable(estado, equipo, entregable_id):
     nuevo_estado = copy.deepcopy(estado)
     equipo = str(equipo)
-    entregable_id = str(entregable_id)
+    entregable_id = int(entregable_id)
 
     paquetes_necesarios = ENTREGABLES.get(entregable_id)
     if not paquetes_necesarios:
         return estado, False
 
-    # comprobar requisitos
+    # paquetes del equipo (son rutas)
     paquetes_equipo = nuevo_estado["proyectos"].get(equipo, [])
-    if not set(paquetes_necesarios).issubset(set(paquetes_equipo)):
+
+    # 🔑 convertir rutas a IDs
+    ids_paquetes_equipo = {extraer_id_desde_ruta(p) for p in paquetes_equipo}
+
+    # comprobar requisitos
+    if not set(paquetes_necesarios).issubset(ids_paquetes_equipo):
         return estado, False
 
     # eliminar paquetes usados
     nuevo_estado["proyectos"][equipo] = [
         p for p in paquetes_equipo
-        if p not in paquetes_necesarios
+        if extraer_id_desde_ruta(p) not in paquetes_necesarios
     ]
 
     # añadir entregable
-    ruta_entregable = f"imagenes/Proyectos/1/Entregables/Entregable {entregable_id}.jpg"
+    ruta_entregable = (
+        f"imagenes/Proyectos/1/Entregables/Entregable {entregable_id}.jpg"
+    )
+
     nuevo_estado.setdefault("entregables", {}).setdefault(equipo, []).append(ruta_entregable)
 
     return nuevo_estado, True
+
 
 
 
@@ -328,4 +337,8 @@ def extraer_id_desde_ruta(ruta):
     import os
     nombre = os.path.basename(ruta)      # 24.jpg
     return int(os.path.splitext(nombre)[0])  # 24
+
+def ruta_paquete(paquete_id):
+    return f"imagenes/Proyectos/1/Entregables/Paquete trabajo/{paquete_id}.jpg"
+
 
