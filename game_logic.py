@@ -32,10 +32,18 @@ def cargar_proyectos_desde_txt(ruta="relacionesproyectos.txt"):
     proyectos = {}
     with open(ruta, encoding="utf-8") as f:
         for linea in f:
-            if ":" not in linea:
+            linea = linea.strip()
+            if not linea or ":" not in linea:
                 continue
-            izq, der = linea.strip().split(":")
-            proyectos[int(izq)] = [int(x) for x in der.split(",")]
+
+            izq, der = linea.split(":")
+
+            proyectos[int(izq)] = [
+                int(x.strip())
+                for x in der.split(",")
+                if x.strip().isdigit()
+            ]
+
     return proyectos
 
 

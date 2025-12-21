@@ -1,6 +1,6 @@
-Proyecto 1: 7,8,9,10
-Proyecto 2: 11,12,13,14
-Proyecto 3: 9,10,11,12
-Proyecto 4: 7,8,13,14
-Proyecto 5: 7,8,11,12
-Proyecto 6: 9,10,13,14
+Proyecto 1:7,8,9,10
+Proyecto 2:11,12,13,14
+Proyecto 3:9,10,11,12
+Proyecto 4:7,8,13,14
+Proyecto 5:7,8,11,12
+Proyecto 6:9,10,13,14
