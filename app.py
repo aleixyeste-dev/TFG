@@ -162,6 +162,21 @@ def mostrar_entregables(col, equipo):
                     st.warning("❌ No se cumplen los requisitos para este entregable")
 
 
+def mostrar_entregables_creados(col, equipo):
+    with col:
+        st.subheader("Entregables creados")
+
+        entregables = estado.get("entregables", {}).get(str(equipo), [])
+
+        if not entregables:
+            st.info("No hay entregables creados todavía")
+            return
+
+        for ruta in entregables:
+            if os.path.exists(ruta):
+                st.image(ruta, width=200)
+            else:
+                st.error(f"Imagen no encontrada: {ruta}")
 
 
 col1, col2 = st.columns(2)
@@ -170,11 +185,13 @@ mostrar_equipo(col1, 1)
 mostrar_fusiones(col1, 1)
 mostrar_proyectos(col1, 1)
 mostrar_entregables(col1, 1)
+mostrar_entregables_creados(col1, 1)
 
 mostrar_equipo(col2, 2)
 mostrar_fusiones(col2, 2)
 mostrar_proyectos(col2, 2)
 mostrar_entregables(col2, 2)
+mostrar_entregables_creados(col2, 2)
 
 # ---------------------------------
 # DEBUG
