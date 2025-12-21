@@ -28,23 +28,27 @@ def normalizar_estado(estado):
 
 
 
-def cargar_proyectos_desde_txt(ruta="relacionesproyectos.txt"):
+def cargar_proyectos_desde_txt():
     proyectos = {}
-    with open(ruta, encoding="utf-8") as f:
+
+    with open("relacionesproyectos.txt", "r", encoding="utf-8") as f:
         for linea in f:
             linea = linea.strip()
             if not linea or ":" not in linea:
                 continue
 
-            izq, der = linea.split(":")
+            izquierda, derecha = linea.split(":")
 
-            proyectos[int(izq)] = [
-                int(x.strip())
-                for x in der.split(",")
-                if x.strip().isdigit()
-            ]
+            # "Proyecto 1" -> 1
+            proyecto_id = int(izquierda.replace("Proyecto", "").strip())
+
+            entregables = [int(x.strip()) for x in derecha.split(",")]
+
+            proyectos[proyecto_id] = entregables
 
     return proyectos
+
+
 
 
 PROYECTOS = cargar_proyectos_desde_txt()
@@ -366,37 +370,38 @@ def ruta_paquete(paquete_id):
 
 
 def proyectos_disponibles(entregables_equipo):
-    ids_entregables = {
-        int(extraer_id(ruta))
-        for ruta in entregables_equipo
-    }
+    disponibles = []
+    entregables_equipo = set(int(e) for e in entregables_equipo)
 
-    posibles = []
     for proyecto_id, necesarios in PROYECTOS.items():
-        if set(necesarios).issubset(ids_entregables):
-            posibles.append(proyecto_id)
+        if set(necesarios).issubset(entregables_equipo):
+            disponibles.append(proyecto_id)
 
-    return posibles
-
+    return disponibles
 
 def ejecutar_proyecto(estado, equipo, proyecto_id):
     nuevo_estado = copy.deepcopy(estado)
     equipo = str(equipo)
 
-    entregables_necesarios = PROYECTOS.get(int(proyecto_id))
-    if not entregables_necesarios:
+    necesarios = PROYECTOS.get(proyecto_id)
+    if not necesarios:
+        return estado, False
+
+    entregables_equipo = set(int(e) for e in nuevo_estado.get("entregables", {}).get(equipo, []))
+
+    if not set(necesarios).issubset(entregables_equipo):
         return estado, False
 
     # eliminar entregables usados
     nuevo_estado["entregables"][equipo] = [
-        ruta for ruta in nuevo_estado["entregables"].get(equipo, [])
-        if int(extraer_id(ruta)) not in entregables_necesarios
+        e for e in nuevo_estado["entregables"][equipo]
+        if int(e) not in necesarios
     ]
 
     # añadir proyecto final
-    ruta_proyecto = f"imagenes/Proyectos/1/{proyecto_id}.jpg"
-    nuevo_estado.setdefault("proyecto_final", {})
-    nuevo_estado["proyecto_final"].setdefault(equipo, []).append(ruta_proyecto)
+    ruta = f"imagenes/Proyectos/{proyecto_id}.jpg"
+    nuevo_estado.setdefault("proyectos_finales", {}).setdefault(equipo, []).append(ruta)
 
     return nuevo_estado, True
+
 
