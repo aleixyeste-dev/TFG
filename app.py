@@ -16,10 +16,6 @@ from game_logic import (
     siguiente_ronda,
 )
 
-estado = st.session_state.estado
-
-bloquear_si_finalizado(estado)
-
 
 from pathlib import Path
 
@@ -43,6 +39,18 @@ def bloquear_si_finalizado(estado: dict):
     if estado.get("finalizado", False):
         mostrar_fin_partida(estado)
         st.stop()
+# ---------------------------------
+# ESTADO GLOBAL (ANTES de leer estado)
+# ---------------------------------
+if "estado" not in st.session_state:
+    st.session_state.estado = inicializar_juego()
+
+estado = st.session_state.estado
+
+# Si ya terminó, cortamos aquí la app
+bloquear_si_finalizado(estado)
+
+
 
 
 # ---------------------------------
