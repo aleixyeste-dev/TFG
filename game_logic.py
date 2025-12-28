@@ -435,6 +435,34 @@ def ejecutar_proyecto(estado, equipo, proyecto_id):
     nuevo_estado.setdefault("proyectos_finales", {})
     nuevo_estado["proyectos_finales"].setdefault(str(equipo), []).append(ruta)
 
+    if not nuevo_estado.get("finalizado", False) and comprobar_fin_partida(nuevo_estado, equipo):
+    finalizar_partida(nuevo_estado, equipo)
+    
     return nuevo_estado, True
 
+
+def finalizar_partida(estado: dict, equipo) -> dict:
+    """
+    Marca la partida como finalizada y guarda el equipo ganador.
+    Devuelve el estado modificado (in-place, pero lo devolvemos por comodidad).
+    """
+    estado["finalizado"] = True
+    estado["ganador"] = str(equipo)
+    return estado
+
+
+def comprobar_fin_partida(estado: dict, equipo) -> bool:
+    """
+    Devuelve True si este equipo ya tiene al menos 1 proyecto final creado.
+    (Condición de victoria).
+    """
+    equipo = str(equipo)
+    proyectos_finales = estado.get("proyectos_finales", {})
+    lista = proyectos_finales.get(equipo, [])
+    return len(lista) >= 1
+
+def resetear_fin_partida(estado: dict) -> dict:
+    estado["finalizado"] = False
+    estado.pop("ganador", None)
+    return estado
 

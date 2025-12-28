@@ -28,6 +28,19 @@ def abs_path(ruta_relativa: str) -> str:
     return str((BASE_DIR / p).resolve())
 
 
+import streamlit as st
+
+def mostrar_fin_partida(estado: dict):
+    if estado.get("finalizado", False):
+        ganador = estado.get("ganador", "?")
+        st.success(f"🏆 Partida finalizada. ¡Gana el Equipo {ganador}!")
+
+def bloquear_si_finalizado(estado: dict):
+    if estado.get("finalizado", False):
+        mostrar_fin_partida(estado)
+        st.stop()
+
+
 # ---------------------------------
 # CONFIGURACIÓN
 # ---------------------------------
