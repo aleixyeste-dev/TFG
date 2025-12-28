@@ -1,12 +1,13 @@
+import copy
+import os
 import random
 import re
+
 import fusiones
-import os
-import copy
+
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 IMG_DIR = os.path.join(BASE_DIR, "imagenes")
-
 
 
 FUSIONES_PAQUETES = fusiones.FUSIONES_PAQUETES
@@ -22,7 +23,8 @@ def normalizar_estado(estado):
     estado.setdefault("ronda", 0)
     estado.setdefault("historial", [])
     estado.setdefault("mazos", {"1": [], "2": []})
-    estado.setdefault("proyectos", {})
+    estado.setdefault("proyectos", {})  # paquetes completados por equipo
+    estado.setdefault("proyectos_asignados", {})
     estado.setdefault("finalizado", False)
     return estado
 
@@ -64,6 +66,7 @@ def inicializar_juego():
         "historial": [],
         "mazos": {"1": [], "2": []},
         "proyectos": {},
+        "proyectos_asignados": {},
         "finalizado": False,
     }
 
@@ -73,7 +76,7 @@ def inicializar_juego():
 # ==============================
 
 def cargar_estructura_proyecto():
-    base_path = "/mount/src/tfg/imagenes/Proyectos"
+    base_path = os.path.join(IMG_DIR, "Proyectos")
 
     if not os.path.exists(base_path):
         raise RuntimeError(f"No existe la ruta {base_path}")
@@ -151,16 +154,16 @@ def siguiente_ronda(estado, estructura, agrupaciones):
     eventos = []
 
     # Asignar proyectos si no existen
-    if not estado["proyectos"]:
+    if not estado["proyectos_asignados"]:
         proyectos = list(estructura.keys())
-        estado["proyectos"] = {
+        estado["proyectos_asignados"] = {
             "1": random.choice(proyectos),
             "2": random.choice(proyectos),
         }
 
     estado["ronda"] += 1
 
-    for equipo, proyecto in estado["proyectos"].items():
+    for equipo, proyecto in estado["proyectos_asignados"].items():
         actividades = estructura.get(proyecto, {}).get("actividades", [])
 
         disponibles = [a for a in actividades if a not in estado["historial"]]
@@ -200,14 +203,19 @@ def fusiones_disponibles(mazo):
 
     return disponibles
 
-def ruta_paquete(paquete_id):
+
+def proyecto_asignado(estado, equipo):
+    return estado.get("proyectos_asignados", {}).get(str(equipo), "1")
+
+
+def ruta_paquete(paquete_id, proyecto_id):
     return os.path.join(
         IMG_DIR,
         "Proyectos",
-        "1",
+        str(proyecto_id),
         "Entregables",
         "Paquete trabajo",
-        f"{paquete_id}.jpg"
+        f"{paquete_id}.jpg",
     )
 
 
@@ -227,27 +235,13 @@ def aplicar_fusion(estado, equipo, paquete_id):
         if obtener_id_carta(carta) not in actividades:
             nuevo_mazo.append(carta)
 
-    nuevo_mazo.append(ruta_paquete(paquete_id))
+    proyecto_id = proyecto_asignado(estado, equipo)
+    nuevo_mazo.append(ruta_paquete(paquete_id, proyecto_id))
     estado["mazos"][str(equipo)] = nuevo_mazo
 
     return estado
 
-import os
-
-def obtener_ruta_paquete(paquete_id, equipo):
-    return os.path.join(
-        "imagenes",
-        "Proyectos",
-        str(equipo),
-        "Entregables",
-        "Paquete trabajo",
-        f"{paquete_id}.jpg"
-    )
-
-
 def ejecutar_fusion(estado, equipo, paquete_id):
-    import copy
-
     nuevo_estado = copy.deepcopy(estado)
     equipo = str(equipo)
     paquete_id = int(paquete_id)
@@ -260,8 +254,8 @@ def ejecutar_fusion(estado, equipo, paquete_id):
         if extraer_id(c) not in actividades_necesarias
     ]
 
-    # ✅ generar ruta correcta del paquete
-    ruta = obtener_ruta_paquete(paquete_id, equipo)
+    proyecto_id = proyecto_asignado(estado, equipo)
+    ruta = ruta_paquete(paquete_id, proyecto_id)
 
     # guardar paquete completado
     # Asegurar tipos correctos
@@ -291,8 +285,6 @@ def extraer_id_actividad(ruta):
     """
     nombre = ruta.split("/")[-1]
     return int(nombre.replace(".jpg", ""))
-
-import os
 
 def extraer_id(ruta):
     """
@@ -345,8 +337,13 @@ def ejecutar_entregable(estado, equipo, entregable_id):
     ]
 
     # añadir entregable
-    ruta_entregable = (
-        f"imagenes/Proyectos/1/Entregables/{entregable_id}.jpg"
+    proyecto_id = proyecto_asignado(estado, equipo)
+    ruta_entregable = os.path.join(
+        IMG_DIR,
+        "Proyectos",
+        str(proyecto_id),
+        "Entregables",
+        f"{entregable_id}.jpg",
     )
 
     nuevo_estado.setdefault("entregables", {}).setdefault(equipo, []).append(ruta_entregable)
@@ -361,20 +358,30 @@ def extraer_id_desde_ruta(ruta):
     Devuelve el número del archivo sin extensión.
     Ej: imagenes/.../24.jpg -> 24
     """
-    import os
-    nombre = os.path.basename(ruta)      # 24.jpg
-    return int(os.path.splitext(nombre)[0])  # 24
 
-def ruta_paquete(paquete_id):
-    return f"imagenes/Proyectos/1/Entregables/Paquete trabajo/{paquete_id}.jpg"
+    if isinstance(ruta, int):
+        return ruta
+
+    nombre = os.path.basename(str(ruta))
+    return int(os.path.splitext(nombre)[0])
 
 
 def proyectos_disponibles(entregables_equipo):
+    """
+    Determina qué proyectos se pueden completar a partir de los entregables del equipo.
+
+    Los entregables almacenan rutas a imágenes (p. ej. imagenes/Proyectos/1/Entregables/3.jpg),
+    por lo que primero se extraen los IDs numéricos antes de validar los requisitos.
+    """
     disponibles = []
-    entregables_equipo = set(int(e) for e in entregables_equipo)
+
+    ids_entregables = set(
+        extraer_id_desde_ruta(e)
+        for e in entregables_equipo
+    )
 
     for proyecto_id, necesarios in PROYECTOS.items():
-        if set(necesarios).issubset(entregables_equipo):
+        if set(necesarios).issubset(ids_entregables):
             disponibles.append(proyecto_id)
 
     return disponibles
@@ -387,20 +394,24 @@ def ejecutar_proyecto(estado, equipo, proyecto_id):
     if not necesarios:
         return estado, False
 
-    entregables_equipo = set(int(e) for e in nuevo_estado.get("entregables", {}).get(equipo, []))
+    entregables_equipo = set(
+        extraer_id_desde_ruta(e)
+        for e in nuevo_estado.get("entregables", {}).get(equipo, [])
+    )
 
     if not set(necesarios).issubset(entregables_equipo):
         return estado, False
 
     # eliminar entregables usados
     nuevo_estado["entregables"][equipo] = [
-        e for e in nuevo_estado["entregables"][equipo]
-        if int(e) not in necesarios
+        e
+        for e in nuevo_estado["entregables"][equipo]
+        if extraer_id_desde_ruta(e) not in necesarios
     ]
 
     # añadir proyecto final
     ruta = f"imagenes/Proyectos/{proyecto_id}.jpg"
-    nuevo_estado.setdefault("proyectos_finales", {}).setdefault(equipo, []).append(ruta)
+    nuevo_estado.setdefault("proyecto_final", {}).setdefault(equipo, []).append(ruta)
 
     return nuevo_estado, True
 
