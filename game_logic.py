@@ -358,6 +358,13 @@ def extraer_id_desde_ruta(ruta):
     Devuelve el número del archivo sin extensión.
     Ej: imagenes/.../24.jpg -> 24
     """
+    import os
+    
+    if isinstance(ruta, int):
+        return ruta
+
+    nombre = os.path.basename(str(ruta))
+    return int(os.path.splitext(nombre)[0])  # 24
 
     if isinstance(ruta, int):
         return ruta
@@ -399,6 +406,7 @@ def ejecutar_proyecto(estado, equipo, proyecto_id):
         for e in nuevo_estado.get("entregables", {}).get(equipo, [])
     )
 
+
     if not set(necesarios).issubset(entregables_equipo):
         return estado, False
 
@@ -412,6 +420,7 @@ def ejecutar_proyecto(estado, equipo, proyecto_id):
     # añadir proyecto final
     ruta = f"imagenes/Proyectos/{proyecto_id}.jpg"
     nuevo_estado.setdefault("proyecto_final", {}).setdefault(equipo, []).append(ruta)
+     nuevo_estado.setdefault("proyecto_final", {}).setdefault(equipo, []).append(ruta)
 
     return nuevo_estado, True
 
