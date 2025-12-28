@@ -21,6 +21,12 @@ from game_logic import (
 
 )
 
+st.set_page_config(
+    page_icon="🧠",
+    page_title="🧠 BIVRA – Partida compartida",
+    layout="wide",
+    initial_sidebar_state="expanded",
+)
 
 from pathlib import Path
 
@@ -111,49 +117,8 @@ bloquear_si_finalizado(estado)
 # ---------------------------------
 # CONFIGURACIÓN
 # ---------------------------------
-st.set_page_config(
-    page_icon="🧠",
-    page_title="🧠 BIVRA – Partida compartida",
-    layout="wide",
-    initial_sidebar_state="expanded",
-)
 
 st.title("🧠 BIVRA - Partida compartida")
-
-
-def codigo_valido(c: str) -> bool:
-    c = c.strip().upper()
-    return len(c) >= 4 and c.isalnum()
-
-with st.sidebar:
-    st.header("🎮 Partidas")
-    codigo = st.text_input("Código de partida", value=st.session_state.get("codigo", "")).strip().upper()
-    equipo = st.radio("Tu equipo", [1, 2], index=0)
-
-    colA, colB = st.columns(2)
-    crear = colA.button("Crear")
-    unirse = colB.button("Unirse")
-
-    if crear:
-        if not codigo_valido(codigo):
-            st.error("Código inválido (mínimo 4 caracteres alfanuméricos).")
-        else:
-            crear_partida_si_no_existe(codigo)
-            st.session_state.codigo = codigo
-            st.session_state.equipo = equipo
-            st.success(f"Partida {codigo} creada / cargada.")
-            st.rerun()
-
-    if unirse:
-        if not codigo_valido(codigo):
-            st.error("Código inválido (mínimo 4 caracteres alfanuméricos).")
-        elif not existe_partida(codigo):
-            st.error("Esa partida no existe.")
-        else:
-            st.session_state.codigo = codigo
-            st.session_state.equipo = equipo
-            st.success(f"Unido a {codigo} como equipo {equipo}.")
-            st.rerun()
 
 
 # ---------------------------------
@@ -175,12 +140,11 @@ estructura, agrupaciones = cargar_datos()
 col_a, col_b = st.columns(2)
 
 with col_a:
-    if st.button("▶️ Siguiente ronda (acción compartida)"):
+    if st.button("▶️ Siguiente ronda (acción compartida)", key="btn_siguiente_ronda"):
         estado, eventos = siguiente_ronda(estado, estructura, agrupaciones)
-        if st.button("▶️ Siguiente ronda (acción compartida)"):
-            estado, eventos = siguiente_ronda(estado, estructura, agrupaciones)
-            guardar_partida(CODIGO, estado)
-            st.rerun()
+        guardar_partida(CODIGO, estado)
+        st.rerun()
+
 
 
 with col_b:
