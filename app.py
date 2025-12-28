@@ -1,32 +1,34 @@
-import streamlit as st
 import os
+
+import streamlit as st
+
+from game_logic import (
+    aplicar_fusion,
+    cargar_estructura_proyecto,
+    ejecutar_entregable,
+    ejecutar_fusion,
+    ejecutar_proyecto,
+    entregables_disponibles,
+    fusiones_disponibles,
+    generar_diccionario_agrupaciones,
+    inicializar_juego,
+    proyectos_disponibles,
+    siguiente_ronda,
+)
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 IMG_DIR = os.path.join(BASE_DIR, "imagenes")
 
-
-from game_logic import (
-    inicializar_juego,
-    siguiente_ronda,
-    cargar_estructura_proyecto,
-    generar_diccionario_agrupaciones,
-    fusiones_disponibles,
-    aplicar_fusion,
-    ejecutar_fusion,
-    entregables_disponibles,
-    ejecutar_entregable,
-    proyectos_disponibles,
-    ejecutar_proyecto
-)
 # ---------------------------------
 # CONFIGURACIÓN
 # ---------------------------------
 st.set_page_config(
-    page_title="BIVRA – Partida compartida",
+    page_title="🧠 BIVRA – Partida compartida",
     layout="wide",
 )
 
 st.title("🧠 BIVRA – Partida compartida")
+
 
 # ---------------------------------
 # CARGA DE DATOS (una sola vez)
@@ -36,6 +38,7 @@ def cargar_datos():
     estructura = cargar_estructura_proyecto()
     agrupaciones = generar_diccionario_agrupaciones(estructura)
     return estructura, agrupaciones
+
 
 estructura, agrupaciones = cargar_datos()
 
@@ -54,11 +57,7 @@ col_a, col_b = st.columns(2)
 
 with col_a:
     if st.button("▶️ Siguiente ronda (acción compartida)"):
-        estado, eventos = siguiente_ronda(
-            estado,
-            estructura,
-            agrupaciones
-        )
+        estado, eventos = siguiente_ronda(estado, estructura, agrupaciones)
         st.session_state.estado = estado
         st.rerun()
 
@@ -66,6 +65,7 @@ with col_b:
     if st.button("🔄 Reiniciar partida (para todos)"):
         st.session_state.estado = inicializar_juego()
         st.rerun()
+
 
 # ---------------------------------
 # VISUALIZACIÓN DE EQUIPOS
@@ -99,21 +99,14 @@ def mostrar_fusiones(col, equipo):
             paquete_id = fusion["paquete"]
 
             if st.button(
-                f"Fusionar Paquete {paquete_id}",
-                key=f"fusion_{equipo}_{paquete_id}"
+                f"Fusionar Paquete {paquete_id}", key=f"fusion_{equipo}_{paquete_id}"
             ):
-                nuevo_estado, ok = ejecutar_fusion(
-                    estado,
-                    equipo,
-                    paquete_id
-                )
+                nuevo_estado, ok = ejecutar_fusion(estado, equipo, paquete_id)
 
                 if ok:
                     st.session_state.estado = nuevo_estado
                     st.rerun()
 
-
-import os
 
 def mostrar_proyectos(col, equipo):
     with col:
@@ -132,9 +125,6 @@ def mostrar_proyectos(col, equipo):
                 st.error(f"Imagen no encontrada: {ruta}")
 
 
-
-
-
 def mostrar_entregables(col, equipo):
     with col:
         st.subheader("Entregables posibles")
@@ -149,12 +139,10 @@ def mostrar_entregables(col, equipo):
         for entregable_id in posibles:
             if st.button(
                 f"Crear Entregable {entregable_id}",
-                key=f"entregable_{equipo}_{entregable_id}"
+                key=f"entregable_{equipo}_{entregable_id}",
             ):
                 nuevo_estado, ok = ejecutar_entregable(
-                    estado,
-                    equipo,
-                    int(entregable_id)   # 👈 MUY IMPORTANTE
+                    estado, equipo, int(entregable_id)  # 👈 MUY IMPORTANTE
                 )
 
                 if ok:
@@ -195,15 +183,14 @@ def mostrar_proyectos2(col, equipo):
         for proyecto_id in posibles:
             if st.button(
                 f"Crear Proyecto {proyecto_id}",
-                key=f"crear_proyecto_{equipo}_{proyecto_id}"
+                key=f"crear_proyecto_{equipo}_{proyecto_id}",
             ):
-                nuevo_estado, ok = ejecutar_proyecto(
-                    estado, equipo, proyecto_id
-                )
+                nuevo_estado, ok = ejecutar_proyecto(estado, equipo, proyecto_id)
                 if ok:
                     st.session_state.estado = nuevo_estado
                     st.experimental_rerun()
-                    
+
+
 def mostrar_proyecto_final(col, equipo):
     with col:
         st.subheader("Proyecto completado")
@@ -215,6 +202,7 @@ def mostrar_proyecto_final(col, equipo):
 
         for ruta in proyectos:
             st.image(ruta, width=220)
+
 
 col1, col2 = st.columns(2)
 
@@ -231,7 +219,7 @@ mostrar_fusiones(col2, 2)
 mostrar_proyectos(col2, 2)
 mostrar_entregables(col2, 2)
 mostrar_entregables_creados(col2, 2)
-mostrar_proyectos(col2, 2)
+mostrar_proyectos2(col2, 2)
 mostrar_proyecto_final(col2, 2)
 
 # ---------------------------------
@@ -239,6 +227,3 @@ mostrar_proyecto_final(col2, 2)
 # ---------------------------------
 with st.expander("ℹ️ Estado interno (debug)"):
     st.json(estado)
-
-
-
