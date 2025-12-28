@@ -19,6 +19,9 @@ from game_logic import (
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 IMG_DIR = os.path.join(BASE_DIR, "imagenes")
 
+    ejecutar_proyecto,
+)
+
 # ---------------------------------
 # CONFIGURACIÓN
 # ---------------------------------
@@ -65,6 +68,8 @@ with col_b:
     if st.button("🔄 Reiniciar partida (para todos)"):
         st.session_state.estado = inicializar_juego()
         st.rerun()
+        
+
 
 
 # ---------------------------------
@@ -191,6 +196,7 @@ def mostrar_proyectos2(col, equipo):
                     st.experimental_rerun()
 
 
+                    
 def mostrar_proyecto_final(col, equipo):
     with col:
         st.subheader("Proyecto completado")
@@ -202,6 +208,8 @@ def mostrar_proyecto_final(col, equipo):
 
         for ruta in proyectos:
             st.image(ruta, width=220)
+            
+
 
 
 col1, col2 = st.columns(2)
