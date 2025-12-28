@@ -231,7 +231,7 @@ mostrar_fusiones(col2, 2)
 mostrar_proyectos(col2, 2)
 mostrar_entregables(col2, 2)
 mostrar_entregables_creados(col2, 2)
-mostrar_proyectos(col2, 2)
+mostrar_proyectos2(col2, 2)
 mostrar_proyecto_final(col2, 2)
 
 # ---------------------------------
