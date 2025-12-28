@@ -430,11 +430,11 @@ def ejecutar_proyecto(estado, equipo, proyecto_id):
     ]
 
     # añadir proyecto final
-    ruta = ruta_proyecto(int(proyecto_id))
-    if not ruta:
-        return estado, False   # o (nuevo_estado, False) según tu patrón
+    ruta = f"imagenes/Proyectos/{proyecto_id}/{proyecto_id}.jpg"
 
-    nuevo_estado.setdefault("proyectos_finales", {}).setdefault(str(equipo), []).append(ruta)
+    nuevo_estado.setdefault("proyecto_final", {})
+    nuevo_estado["proyecto_final"].setdefault(str(equipo), []).append(ruta)
+
     return nuevo_estado, True
 
 
