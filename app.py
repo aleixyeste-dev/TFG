@@ -57,10 +57,11 @@ with st.sidebar:
     codigo = st.text_input(
         "Código de partida",
         value=st.session_state.get("codigo", ""),
-        placeholder="Ej: ABC123"
+        placeholder="Ej: ABC123",
+        key="codigo_sidebar",
     ).strip().upper()
 
-    equipo = st.radio("Tu equipo", [1, 2], index=0)
+    equipo = st.radio("Tu equipo", [1, 2], index=0, key="equipo_sidebar")
 
     colA, colB = st.columns(2)
     crear = colA.button("Crear")
