@@ -19,6 +19,11 @@ from game_logic import (
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 IMG_DIR = os.path.join(BASE_DIR, "imagenes")
 
+)
+
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+IMG_DIR = os.path.join(BASE_DIR, "imagenes")
+
     ejecutar_proyecto,
 )
 
@@ -26,7 +31,7 @@ IMG_DIR = os.path.join(BASE_DIR, "imagenes")
 # CONFIGURACIÓN
 # ---------------------------------
 st.set_page_config(
-    page_title="BIVRA – Partida compartida",
+    page_title="🧠 BIVRA – Partida compartida",
     layout="wide",
 )
 
@@ -69,6 +74,7 @@ with col_b:
         st.session_state.estado = inicializar_juego()
         st.rerun()
         
+
 
 
 
@@ -209,6 +215,7 @@ def mostrar_proyecto_final(col, equipo):
         for ruta in proyectos:
             st.image(ruta, width=220)
             
+
 
 
 
