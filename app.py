@@ -16,6 +16,18 @@ from game_logic import (
     siguiente_ronda,
 )
 
+
+from pathlib import Path
+
+BASE_DIR = Path(__file__).resolve().parent
+
+def abs_path(ruta_relativa: str) -> str:
+    return str((BASE_DIR / ruta_relativa).resolve())
+
+
+
+
+
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 IMG_DIR = os.path.join(BASE_DIR, "imagenes")
 
@@ -215,13 +227,21 @@ def mostrar_proyecto_final(col, equipo):
     with col:
         st.subheader("Proyecto completado")
 
-        proyectos = estado.get("proyecto_final", {}).get(str(equipo), [])
-        if not proyectos:
+        equipo = str(equipo)
+
+        proyectos_finales = estado.get("proyectos_finales") or estado.get("proyecto_final") or {}
+        lista = proyectos_finales.get(equipo, [])
+
+        if not lista:
             st.info("Aún no se ha completado el proyecto")
             return
 
-        for ruta in proyectos:
-            st.image(ruta, width=220)
+        for ruta_rel in lista:
+            ruta_abs = abs_path(ruta_rel)
+            if not Path(ruta_abs).exists():
+                st.error(f"Imagen no encontrada: {ruta_rel}")
+            else:
+                st.image(ruta_abs, width=220)
             
 
 
