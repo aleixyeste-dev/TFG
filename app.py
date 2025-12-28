@@ -1,21 +1,24 @@
-import streamlit as st
 import os
+
+import streamlit as st
+
+from game_logic import (
+    aplicar_fusion,
+    cargar_estructura_proyecto,
+    ejecutar_entregable,
+    ejecutar_fusion,
+    ejecutar_proyecto,
+    entregables_disponibles,
+    fusiones_disponibles,
+    generar_diccionario_agrupaciones,
+    inicializar_juego,
+    proyectos_disponibles,
+    siguiente_ronda,
+)
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 IMG_DIR = os.path.join(BASE_DIR, "imagenes")
 
-
-from game_logic import (
-    inicializar_juego,
-    siguiente_ronda,
-    cargar_estructura_proyecto,
-    generar_diccionario_agrupaciones,
-    fusiones_disponibles,
-    aplicar_fusion,
-    ejecutar_fusion,
-    entregables_disponibles,
-    ejecutar_entregable,
-    proyectos_disponibles,
     ejecutar_proyecto,
 )
 
@@ -66,6 +69,7 @@ with col_b:
         st.session_state.estado = inicializar_juego()
         st.rerun()
         
+
 
 
 # ---------------------------------
@@ -205,6 +209,7 @@ def mostrar_proyecto_final(col, equipo):
         for ruta in proyectos:
             st.image(ruta, width=220)
             
+
 
 
 col1, col2 = st.columns(2)
