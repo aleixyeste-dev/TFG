@@ -72,6 +72,21 @@ st.set_page_config(
 
 st.title("🧠 BIVRA - Partida compartida")
 
+# ---------------------------------
+# CÓDIGO DE PARTIDA (SIDEBAR)
+# ---------------------------------
+st.sidebar.header("🎮 Partida")
+
+codigo_partida = st.sidebar.text_input(
+    "Código de partida",
+    placeholder="Ej: ABC123"
+)
+
+if not codigo_partida:
+    st.info("Introduce un código en la barra lateral para crear o unirte a una partida.")
+    st.stop()
+
+
 
 def codigo_valido(c: str) -> bool:
     c = c.strip().upper()
