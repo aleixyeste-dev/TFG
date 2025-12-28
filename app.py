@@ -24,6 +24,11 @@ IMG_DIR = os.path.join(BASE_DIR, "imagenes")
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 IMG_DIR = os.path.join(BASE_DIR, "imagenes")
 
+)
+
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+IMG_DIR = os.path.join(BASE_DIR, "imagenes")
+
 # ---------------------------------
 # CONFIGURACIÓN
 # ---------------------------------
@@ -35,11 +40,13 @@ st.set_page_config(page_title="🧠 BIVRA – Partida compartida", layout="wide"
 # CONFIGURACIÓN
 # ---------------------------------
 st.set_page_config(
+    page_title="BIVRA - Partida compartida",
+    page_icon="🧠",
     page_title="🧠 BIVRA – Partida compartida",
     layout="wide",
 )
 
-st.title("🧠 BIVRA – Partida compartida")
+st.title("🧠 BIVRA - Partida compartida")
 
 
 # ---------------------------------
@@ -78,6 +85,7 @@ with col_b:
         st.session_state.estado = inicializar_juego()
         st.rerun()
         
+
 
 
 
@@ -205,6 +213,9 @@ def mostrar_proyectos2(col, equipo):
                 nuevo_estado, ok = ejecutar_proyecto(estado, equipo, proyecto_id)
                 if ok:
                     st.session_state.estado = nuevo_estado
+                    st.rerun()
+
+
                     st.experimental_rerun()
 
 
@@ -221,6 +232,7 @@ def mostrar_proyecto_final(col, equipo):
         for ruta in proyectos:
             st.image(ruta, width=220)
             
+
 
 
 
