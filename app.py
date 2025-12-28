@@ -108,9 +108,6 @@ def mostrar_fusiones(col, equipo):
                     st.rerun()
 
 
-import os
-
-
 def mostrar_proyectos(col, equipo):
     with col:
         st.subheader("Paquetes completados")
