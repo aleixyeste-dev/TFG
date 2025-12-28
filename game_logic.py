@@ -466,3 +466,77 @@ def resetear_fin_partida(estado: dict) -> dict:
     estado.pop("ganador", None)
     return estado
 
+import json
+import os
+import time
+from pathlib import Path
+from typing import Any, Dict, Optional
+
+PARTIDAS_DIR = Path(__file__).resolve().parent / "partidas"
+PARTIDAS_DIR.mkdir(exist_ok=True)
+
+def _path_partida(codigo: str) -> Path:
+    codigo = codigo.strip().upper()
+    return PARTIDAS_DIR / f"{codigo}.json"
+
+def _path_lock(codigo: str) -> Path:
+    codigo = codigo.strip().upper()
+    return PARTIDAS_DIR / f"{codigo}.lock"
+
+def _adquirir_lock(codigo: str, timeout_s: float = 3.0) -> None:
+    """Lock simple por archivo (evita escrituras simultáneas)."""
+    lock_path = _path_lock(codigo)
+    inicio = time.time()
+    while True:
+        try:
+            fd = os.open(str(lock_path), os.O_CREAT | os.O_EXCL | os.O_WRONLY)
+            os.close(fd)
+            return
+        except FileExistsError:
+            if time.time() - inicio > timeout_s:
+                # si se queda colgado por un lock viejo, lo rompemos
+                try:
+                    lock_path.unlink()
+                except Exception:
+                    pass
+                return
+            time.sleep(0.05)
+
+def _liberar_lock(codigo: str) -> None:
+    try:
+        _path_lock(codigo).unlink()
+    except Exception:
+        pass
+
+def cargar_partida(codigo: str) -> Optional[Dict[str, Any]]:
+    path = _path_partida(codigo)
+    if not path.exists():
+        return None
+    try:
+        return json.loads(path.read_text(encoding="utf-8"))
+    except Exception:
+        return None
+
+def guardar_partida(codigo: str, estado: Dict[str, Any]) -> None:
+    codigo = codigo.strip().upper()
+    _adquirir_lock(codigo)
+    try:
+        path = _path_partida(codigo)
+        tmp = path.with_suffix(".tmp")
+        tmp.write_text(json.dumps(estado, ensure_ascii=False, indent=2), encoding="utf-8")
+        tmp.replace(path)  # escritura atómica
+    finally:
+        _liberar_lock(codigo)
+
+def crear_partida_si_no_existe(codigo: str) -> Dict[str, Any]:
+    codigo = codigo.strip().upper()
+    estado = cargar_partida(codigo)
+    if estado is None:
+        estado = inicializar_juego()  # <-- tu función existente
+        # opcional: guarda el código dentro del estado
+        estado["codigo_partida"] = codigo
+        guardar_partida(codigo, estado)
+    return estado
+
+def existe_partida(codigo: str) -> bool:
+    return _path_partida(codigo.strip().upper()).exists()

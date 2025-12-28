@@ -14,6 +14,11 @@ from game_logic import (
     inicializar_juego,
     proyectos_disponibles,
     siguiente_ronda,
+    cargar_partida,
+    guardar_partida,
+    crear_partida_si_no_existe,
+    existe_partida,
+
 )
 
 
@@ -28,8 +33,6 @@ def abs_path(ruta_relativa: str) -> str:
     return str((BASE_DIR / p).resolve())
 
 
-import streamlit as st
-
 def mostrar_fin_partida(estado: dict):
     if estado.get("finalizado", False):
         ganador = estado.get("ganador", "?")
@@ -42,14 +45,19 @@ def bloquear_si_finalizado(estado: dict):
 # ---------------------------------
 # ESTADO GLOBAL (ANTES de leer estado)
 # ---------------------------------
-if "estado" not in st.session_state:
-    st.session_state.estado = inicializar_juego()
+if "codigo" not in st.session_state:
+    st.info("Introduce un código en la barra lateral para crear o unirte a una partida.")
+    st.stop()
 
-estado = st.session_state.estado
+CODIGO = st.session_state.codigo
+
+estado = cargar_partida(CODIGO)
+if estado is None:
+    # si existe el código pero no hay fichero aún, lo creamos
+    estado = crear_partida_si_no_existe(CODIGO)
 
 # Si ya terminó, cortamos aquí la app
 bloquear_si_finalizado(estado)
-
 
 
 
@@ -65,6 +73,41 @@ st.set_page_config(
 st.title("🧠 BIVRA - Partida compartida")
 
 
+def codigo_valido(c: str) -> bool:
+    c = c.strip().upper()
+    return len(c) >= 4 and c.isalnum()
+
+with st.sidebar:
+    st.header("🎮 Partidas")
+    codigo = st.text_input("Código de partida", value=st.session_state.get("codigo", "")).strip().upper()
+    equipo = st.radio("Tu equipo", [1, 2], index=0)
+
+    colA, colB = st.columns(2)
+    crear = colA.button("Crear")
+    unirse = colB.button("Unirse")
+
+    if crear:
+        if not codigo_valido(codigo):
+            st.error("Código inválido (mínimo 4 caracteres alfanuméricos).")
+        else:
+            crear_partida_si_no_existe(codigo)
+            st.session_state.codigo = codigo
+            st.session_state.equipo = equipo
+            st.success(f"Partida {codigo} creada / cargada.")
+            st.rerun()
+
+    if unirse:
+        if not codigo_valido(codigo):
+            st.error("Código inválido (mínimo 4 caracteres alfanuméricos).")
+        elif not existe_partida(codigo):
+            st.error("Esa partida no existe.")
+        else:
+            st.session_state.codigo = codigo
+            st.session_state.equipo = equipo
+            st.success(f"Unido a {codigo} como equipo {equipo}.")
+            st.rerun()
+
+
 # ---------------------------------
 # CARGA DE DATOS (una sola vez)
 # ---------------------------------
@@ -77,13 +120,6 @@ def cargar_datos():
 
 estructura, agrupaciones = cargar_datos()
 
-# ---------------------------------
-# ESTADO GLOBAL
-# ---------------------------------
-if "estado" not in st.session_state:
-    st.session_state.estado = inicializar_juego()
-
-estado = st.session_state.estado
 
 # ---------------------------------
 # ACCIONES
@@ -93,13 +129,20 @@ col_a, col_b = st.columns(2)
 with col_a:
     if st.button("▶️ Siguiente ronda (acción compartida)"):
         estado, eventos = siguiente_ronda(estado, estructura, agrupaciones)
-        st.session_state.estado = estado
-        st.rerun()
+        if st.button("▶️ Siguiente ronda (acción compartida)"):
+            estado, eventos = siguiente_ronda(estado, estructura, agrupaciones)
+            guardar_partida(CODIGO, estado)
+            st.rerun()
+
 
 with col_b:
     if st.button("🔄 Reiniciar partida (para todos)"):
-        st.session_state.estado = inicializar_juego()
+        estado = inicializar_juego()
+    # opcional: guardar el código dentro del estado
+        estado["codigo_partida"] = CODIGO
+        guardar_partida(CODIGO, estado)
         st.rerun()
+
         
 
 
@@ -144,8 +187,9 @@ def mostrar_fusiones(col, equipo):
                 nuevo_estado, ok = ejecutar_fusion(estado, equipo, paquete_id)
 
                 if ok:
-                    st.session_state.estado = nuevo_estado
+                    guardar_partida(CODIGO, nuevo_estado)
                     st.rerun()
+
 
 
 def mostrar_proyectos(col, equipo):
@@ -186,8 +230,9 @@ def mostrar_entregables(col, equipo):
                 )
 
                 if ok:
-                    st.session_state.estado = nuevo_estado
+                    guardar_partida(CODIGO, nuevo_estado)
                     st.rerun()
+
                 else:
                     st.warning("❌ No se cumplen los requisitos para este entregable")
 
@@ -227,11 +272,12 @@ def mostrar_proyectos2(col, equipo):
             ):
                 nuevo_estado, ok = ejecutar_proyecto(estado, equipo, proyecto_id)
                 if ok:
-                    st.session_state.estado = nuevo_estado
+                    guardar_partida(CODIGO, nuevo_estado)
                     st.rerun()
 
 
-                    st.experimental_rerun()
+
+                    
 
 
                     
