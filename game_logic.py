@@ -362,7 +362,11 @@ def extraer_id_desde_ruta(ruta):
     Ej: imagenes/.../24.jpg -> 24
     """
     import os
-    nombre = os.path.basename(ruta)      # 24.jpg
+
+    if isinstance(ruta, int):
+        return ruta
+
+    nombre = os.path.basename(str(ruta))      # 24.jpg
     return int(os.path.splitext(nombre)[0])  # 24
 
 def ruta_paquete(paquete_id):
@@ -370,11 +374,21 @@ def ruta_paquete(paquete_id):
 
 
 def proyectos_disponibles(entregables_equipo):
+    """
+    Determina qué proyectos se pueden completar a partir de los entregables del equipo.
+
+    Los entregables almacenan rutas a imágenes (p. ej. imagenes/Proyectos/1/Entregables/3.jpg),
+    por lo que primero se extraen los IDs numéricos antes de validar los requisitos.
+    """
     disponibles = []
-    entregables_equipo = set(int(e) for e in entregables_equipo)
+
+    ids_entregables = set(
+        extraer_id_desde_ruta(e)
+        for e in entregables_equipo
+    )
 
     for proyecto_id, necesarios in PROYECTOS.items():
-        if set(necesarios).issubset(entregables_equipo):
+        if set(necesarios).issubset(ids_entregables):
             disponibles.append(proyecto_id)
 
     return disponibles
@@ -387,7 +401,10 @@ def ejecutar_proyecto(estado, equipo, proyecto_id):
     if not necesarios:
         return estado, False
 
-    entregables_equipo = set(int(e) for e in nuevo_estado.get("entregables", {}).get(equipo, []))
+    entregables_equipo = set(
+        extraer_id_desde_ruta(e)
+        for e in nuevo_estado.get("entregables", {}).get(equipo, [])
+    )
 
     if not set(necesarios).issubset(entregables_equipo):
         return estado, False
@@ -400,7 +417,7 @@ def ejecutar_proyecto(estado, equipo, proyecto_id):
 
     # añadir proyecto final
     ruta = f"imagenes/Proyectos/{proyecto_id}.jpg"
-    nuevo_estado.setdefault("proyectos_finales", {}).setdefault(equipo, []).append(ruta)
+    nuevo_estado.setdefault("proyecto_final", {}).setdefault(equipo, []).append(ruta)
 
     return nuevo_estado, True
 
