@@ -45,19 +45,66 @@ def bloquear_si_finalizado(estado: dict):
 # ---------------------------------
 # ESTADO GLOBAL (ANTES de leer estado)
 # ---------------------------------
-if "codigo" not in st.session_state:
+# ---------------------------------
+# SIDEBAR: Crear / Unirse
+# ---------------------------------
+def codigo_valido(c: str) -> bool:
+    c = c.strip().upper()
+    return len(c) >= 4 and c.isalnum()
+
+with st.sidebar:
+    st.header("🎮 Partidas")
+    codigo = st.text_input(
+        "Código de partida",
+        value=st.session_state.get("codigo", ""),
+        placeholder="Ej: ABC123"
+    ).strip().upper()
+
+    equipo = st.radio("Tu equipo", [1, 2], index=0)
+
+    colA, colB = st.columns(2)
+    crear = colA.button("Crear")
+    unirse = colB.button("Unirse")
+
+    if crear:
+        if not codigo_valido(codigo):
+            st.error("Código inválido (mínimo 4 caracteres alfanuméricos).")
+        else:
+            crear_partida_si_no_existe(codigo)
+            st.session_state.codigo = codigo
+            st.session_state.equipo = equipo
+            st.success(f"Partida {codigo} creada / cargada.")
+            st.rerun()
+
+    if unirse:
+        if not codigo_valido(codigo):
+            st.error("Código inválido (mínimo 4 caracteres alfanuméricos).")
+        elif not existe_partida(codigo):
+            st.error("Esa partida no existe.")
+        else:
+            st.session_state.codigo = codigo
+            st.session_state.equipo = equipo
+            st.success(f"Unido a {codigo} como equipo {equipo}.")
+            st.rerun()
+
+# ---------------------------------
+# SI NO HAY CÓDIGO, PARAMOS AQUÍ (PERO LA SIDEBAR YA EXISTE)
+# ---------------------------------
+if "codigo" not in st.session_state or not st.session_state.codigo:
     st.info("Introduce un código en la barra lateral para crear o unirte a una partida.")
     st.stop()
 
 CODIGO = st.session_state.codigo
 
+# ---------------------------------
+# CARGA ESTADO PARTIDA
+# ---------------------------------
 estado = cargar_partida(CODIGO)
 if estado is None:
-    # si existe el código pero no hay fichero aún, lo creamos
     estado = crear_partida_si_no_existe(CODIGO)
 
-# Si ya terminó, cortamos aquí la app
 bloquear_si_finalizado(estado)
+
 
 
 # ---------------------------------
@@ -67,30 +114,10 @@ st.set_page_config(
     page_icon="🧠",
     page_title="🧠 BIVRA – Partida compartida",
     layout="wide",
+    initial_sidebar_state="expanded",
 )
 
 st.title("🧠 BIVRA - Partida compartida")
-
-# ---------------------------------
-# CÓDIGO DE PARTIDA (SIDEBAR)
-# ---------------------------------
-st.set_page_config(
-    page_title="BIVRA",
-    layout="wide",
-    initial_sidebar_state="expanded"
-)
-
-st.sidebar.header("🎮 Partida")
-
-codigo_partida = st.sidebar.text_input(
-    "Código de partida",
-    placeholder="Ej: ABC123"
-)
-
-if not codigo_partida:
-    st.info("Introduce un código en la barra lateral para crear o unirte a una partida.")
-    st.stop()
-
 
 
 def codigo_valido(c: str) -> bool:
