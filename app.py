@@ -74,6 +74,12 @@ st.title("🧠 BIVRA - Partida compartida")
 # ---------------------------------
 # CÓDIGO DE PARTIDA (SIDEBAR)
 # ---------------------------------
+st.set_page_config(
+    page_title="BIVRA",
+    layout="wide",
+    initial_sidebar_state="expanded"
+)
+
 st.sidebar.header("🎮 Partida")
 
 codigo_partida = st.sidebar.text_input(
