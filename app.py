@@ -16,6 +16,10 @@ from game_logic import (
     siguiente_ronda,
 )
 
+estado = st.session_state.estado
+
+bloquear_si_finalizado(estado)
+
 
 from pathlib import Path
 

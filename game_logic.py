@@ -436,7 +436,7 @@ def ejecutar_proyecto(estado, equipo, proyecto_id):
     nuevo_estado["proyectos_finales"].setdefault(str(equipo), []).append(ruta)
 
     if not nuevo_estado.get("finalizado", False) and comprobar_fin_partida(nuevo_estado, equipo):
-    finalizar_partida(nuevo_estado, equipo)
+        finalizar_partida(nuevo_estado, equipo)
     
     return nuevo_estado, True
 
