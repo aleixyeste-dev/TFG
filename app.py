@@ -22,10 +22,13 @@ IMG_DIR = os.path.join(BASE_DIR, "imagenes")
 # ---------------------------------
 # CONFIGURACIÓN
 # ---------------------------------
-st.set_page_config(page_title="🧠 BIVRA – Partida compartida", layout="wide")
+st.set_page_config(
+    page_title="BIVRA - Partida compartida",
+    page_icon="🧠",
+    layout="wide",
+)
 
-st.title("🧠 BIVRA – Partida compartida")
-
+st.title("🧠 BIVRA - Partida compartida")
 
 # ---------------------------------
 # CARGA DE DATOS (una sola vez)
@@ -185,7 +188,7 @@ def mostrar_proyectos2(col, equipo):
                 nuevo_estado, ok = ejecutar_proyecto(estado, equipo, proyecto_id)
                 if ok:
                     st.session_state.estado = nuevo_estado
-                    st.experimental_rerun()
+                    st.rerun()
 
 
 def mostrar_proyecto_final(col, equipo):
