@@ -33,8 +33,6 @@ IMG_DIR = os.path.join(BASE_DIR, "imagenes")
 # CONFIGURACIÓN
 # ---------------------------------
 st.set_page_config(page_title="🧠 BIVRA – Partida compartida", layout="wide")
-    ejecutar_proyecto
-)
 
 # ---------------------------------
 # CONFIGURACIÓN
@@ -166,7 +164,6 @@ def mostrar_entregables(col, equipo):
                 key=f"entregable_{equipo}_{entregable_id}",
             ):
                 nuevo_estado, ok = ejecutar_entregable(
-                    estado, equipo, int(entregable_id)
                     estado, equipo, int(entregable_id)  # 👈 MUY IMPORTANTE
                 )
 

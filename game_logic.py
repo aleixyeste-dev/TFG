@@ -420,7 +420,6 @@ def ejecutar_proyecto(estado, equipo, proyecto_id):
     # añadir proyecto final
     ruta = f"imagenes/Proyectos/{proyecto_id}.jpg"
     nuevo_estado.setdefault("proyecto_final", {}).setdefault(equipo, []).append(ruta)
-     nuevo_estado.setdefault("proyecto_final", {}).setdefault(equipo, []).append(ruta)
 
     return nuevo_estado, True
 
