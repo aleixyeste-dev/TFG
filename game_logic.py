@@ -362,6 +362,7 @@ def extraer_id_desde_ruta(ruta):
     Ej: imagenes/.../24.jpg -> 24
     """
     import os
+    
     if isinstance(ruta, int):
         return ruta
 
