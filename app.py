@@ -22,24 +22,11 @@ from pathlib import Path
 BASE_DIR = Path(__file__).resolve().parent
 
 def abs_path(ruta_relativa: str) -> str:
-    return str((BASE_DIR / ruta_relativa).resolve())
+    p = Path(ruta_relativa)
+    if p.is_absolute():
+        return str(p)
+    return str((BASE_DIR / p).resolve())
 
-
-
-
-
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-IMG_DIR = os.path.join(BASE_DIR, "imagenes")
-
-
-
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-IMG_DIR = os.path.join(BASE_DIR, "imagenes")
-
-
-
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-IMG_DIR = os.path.join(BASE_DIR, "imagenes")
 
 # ---------------------------------
 # CONFIGURACIÓN
