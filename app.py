@@ -67,6 +67,7 @@ with col_b:
         st.rerun()
         
 
+
 # ---------------------------------
 # VISUALIZACIÓN DE EQUIPOS
 # ---------------------------------
@@ -101,14 +102,11 @@ def mostrar_fusiones(col, equipo):
             if st.button(
                 f"Fusionar Paquete {paquete_id}", key=f"fusion_{equipo}_{paquete_id}"
             ):
-            nuevo_estado, ok = ejecutar_fusion(estado, equipo, paquete_id)    
+                nuevo_estado, ok = ejecutar_fusion(estado, equipo, paquete_id)
 
                 if ok:
                     st.session_state.estado = nuevo_estado
                     st.rerun()
-
-
-import os
 
 
 def mostrar_proyectos(col, equipo):
@@ -193,6 +191,7 @@ def mostrar_proyectos2(col, equipo):
                     st.session_state.estado = nuevo_estado
                     st.experimental_rerun()
 
+
                     
 def mostrar_proyecto_final(col, equipo):
     with col:
@@ -206,6 +205,7 @@ def mostrar_proyecto_final(col, equipo):
         for ruta in proyectos:
             st.image(ruta, width=220)
             
+
 
 col1, col2 = st.columns(2)
 
@@ -230,6 +230,3 @@ mostrar_proyecto_final(col2, 2)
 # ---------------------------------
 with st.expander("ℹ️ Estado interno (debug)"):
     st.json(estado)
-
-
-
