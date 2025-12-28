@@ -219,6 +219,18 @@ def ruta_paquete(paquete_id, proyecto_id):
     )
 
 
+from pathlib import Path
+
+BASE_DIR = Path(__file__).resolve().parent  # carpeta TFG (donde están los scripts)
+
+def ruta_proyecto(proyecto_id: int) -> str | None:
+    # tus proyectos están aquí: imagenes/Proyectos/<id>/<id>.<ext>
+    for ext in ("jpg", "png", "jpeg", "webp"):
+        rel = f"imagenes/Proyectos/{proyecto_id}/{proyecto_id}.{ext}"
+        if (BASE_DIR / rel).exists():
+            return rel
+    return None
+
 
 
 def aplicar_fusion(estado, equipo, paquete_id):
@@ -418,9 +430,11 @@ def ejecutar_proyecto(estado, equipo, proyecto_id):
     ]
 
     # añadir proyecto final
-    ruta = f"imagenes/Proyectos/{proyecto_id}.jpg"
-    nuevo_estado.setdefault("proyecto_final", {}).setdefault(equipo, []).append(ruta)
+    ruta = ruta_proyecto(int(proyecto_id))
+    if not ruta:
+        return estado, False   # o (nuevo_estado, False) según tu patrón
 
+    nuevo_estado.setdefault("proyectos_finales", {}).setdefault(str(equipo), []).append(ruta)
     return nuevo_estado, True
 
 
