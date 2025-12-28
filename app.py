@@ -33,7 +33,7 @@ IMG_DIR = os.path.join(BASE_DIR, "imagenes")
 # CONFIGURACIÓN
 # ---------------------------------
 st.set_page_config(page_title="🧠 BIVRA – Partida compartida", layout="wide")
-    ejecutar_proyecto,
+    ejecutar_proyecto
 )
 
 # ---------------------------------
