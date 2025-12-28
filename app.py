@@ -228,8 +228,7 @@ def mostrar_proyecto_final(col, equipo):
         st.subheader("Proyecto completado")
 
         equipo = str(equipo)
-
-        proyectos_finales = estado.get("proyectos_finales") or estado.get("proyecto_final") or {}
+        proyectos_finales = estado.get("proyectos_finales", {})
         lista = proyectos_finales.get(equipo, [])
 
         if not lista:
@@ -242,6 +241,7 @@ def mostrar_proyecto_final(col, equipo):
                 st.error(f"Imagen no encontrada: {ruta_rel}")
             else:
                 st.image(ruta_abs, width=220)
+
             
 
 
