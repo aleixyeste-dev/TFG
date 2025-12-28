@@ -60,7 +60,6 @@ if estado is None:
 bloquear_si_finalizado(estado)
 
 
-
 # ---------------------------------
 # CONFIGURACIÓN
 # ---------------------------------
