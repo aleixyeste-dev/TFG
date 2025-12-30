@@ -182,50 +182,48 @@ def mostrar_equipo(col, equipo):
         for carta in mazo:
             st.image(carta, width=160)
 
-
 def mostrar_fusiones(col, equipo):
     with col:
         st.subheader("Fusiones (selecciona cartas)")
 
         equipo = str(equipo)
         sel_key = f"sel_fusion_{equipo}"
+        clear_key = f"clear_sel_{equipo}"
 
-        # 1) Inicializa la key ANTES de crear el widget
-        if sel_key not in st.session_state:
+        # 1) Inicializa bandera
+        if clear_key not in st.session_state:
+            st.session_state[clear_key] = False
+
+        # 2) Si venimos de una fusión correcta, limpiamos ANTES de crear el multiselect
+        if st.session_state[clear_key]:
             st.session_state[sel_key] = []
+            st.session_state[clear_key] = False
 
-        mazo = estado["mazos"].get(equipo, [])
-        if not mazo:
-            st.info("No tienes actividades.")
+        actividades = estado["mazos"].get(equipo, [])
+        if not actividades:
+            st.info("No hay actividades para fusionar")
             return
 
-        # Opciones (pon aquí lo que tú uses: rutas, ids, etc.)
-        opciones = mazo  # por ejemplo: lista de rutas
-
-        # 2) Widget (usa esa key)
         seleccion = st.multiselect(
             "Selecciona las actividades a fusionar",
-            options=opciones,
+            options=actividades,
+            default=st.session_state.get(sel_key, []),
+            format_func=lambda r: os.path.basename(str(r)),
             key=sel_key
         )
 
-        # 3) Botón con callback: aquí SÍ puedes cambiar session_state
-        def _fusionar():
+        if st.button("Fusionar selección", key=f"btn_fusion_sel_{equipo}"):
             nuevo_estado, ok, msg = ejecutar_fusion_con_seleccion(
-                estado, equipo, st.session_state[sel_key]
+                estado, equipo, seleccion
             )
+
             if ok:
                 st.session_state.estado = nuevo_estado
-                st.session_state[sel_key] = []  # reset de selección
+                st.session_state[clear_key] = True   # <- se limpia en el siguiente rerun
+                st.success(msg)
+                st.rerun()
             else:
-                st.session_state["_msg_fusion"] = msg
-
-        st.button("Fusionar selección", key=f"btn_fusion_sel_{equipo}", on_click=_fusionar)
-
-        # Mensaje (si quieres mostrarlo)
-        if "_msg_fusion" in st.session_state:
-            st.warning(st.session_state.pop("_msg_fusion"))
-
+                st.warning(msg)
 
 
 
