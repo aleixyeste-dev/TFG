@@ -15,6 +15,7 @@ from game_logic import (
     proyectos_disponibles,
     siguiente_ronda,
     extraer_id,
+    FUSIONES_PAQUETES,
     cargar_partida,
     guardar_partida,
     crear_partida_si_no_existe,
