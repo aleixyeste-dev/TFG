@@ -185,53 +185,40 @@ def mostrar_equipo(col, equipo):
 
 def mostrar_fusiones(col, equipo):
     with col:
-        st.subheader("Fusiones posibles")
+        st.subheader("Fusiones (selecciona cartas)")
 
         equipo = str(equipo)
         mazo = estado["mazos"].get(equipo, [])
 
-        if not mazo:
-            st.info("No hay cartas todavía")
+        # Solo actividades (si tu mazo mezcla cosas)
+        actividades = [r for r in mazo if "/Actividades/" in r or "\\Actividades\\" in r]
+        if not actividades:
+            st.info("No hay actividades para fusionar")
             return
 
-        # --- Selección de cartas ---
-        st.markdown("**Selecciona las actividades que quieres usar:**")
-        seleccion = []
-        for i, ruta in enumerate(mazo):
-            if st.checkbox(f"{ruta}", key=f"sel_{equipo}_{i}"):
-                seleccion.append(ruta)
+        # Multiselect (guarda rutas)
+        seleccion = st.multiselect(
+            "Selecciona las actividades a fusionar",
+            options=actividades,
+            default=[],
+            format_func=lambda r: os.path.basename(str(r)),
+            key=f"sel_fusion_{equipo}"
+        )
 
-        # si no seleccionas nada, no hacemos nada
-        if not seleccion:
-            st.info("Selecciona cartas para intentar una fusión.")
-            return
+        if st.button("Fusionar selección", key=f"btn_fusion_sel_{equipo}"):
+            nuevo_estado, ok, msg = ejecutar_fusion_con_seleccion(
+                estado,
+                equipo,
+                seleccion,
+                FUSIONES_PAQUETES,   # IMPORTANTE: pásalo o impórtalo
+            )
+            if ok:
+                st.session_state.estado = nuevo_estado
+                st.success(msg)
+                st.rerun()
+            else:
+                st.warning(msg)
 
-        # --- Comprobar qué paquetes podrían hacerse con esa selección ---
-        ids_sel = [extraer_id(r) for r in seleccion]
-
-        # paquetes que coinciden EXACTAMENTE con la selección
-        paquetes_ok = [
-            pid for pid, req in FUSIONES_PAQUETES.items()
-            if set(req) == set(ids_sel)
-        ]
-
-        if not paquetes_ok:
-            st.warning("La selección no corresponde a ninguna fusión válida.")
-            return
-
-        # si hay varios (raro, pero posible), los listamos
-        for paquete_id in paquetes_ok:
-            if st.button(f"Fusionar Paquete {paquete_id}", key=f"btn_fusion_{equipo}_{paquete_id}"):
-                nuevo_estado, ok, msg = ejecutar_fusion_con_seleccion(
-                    estado, equipo, paquete_id, seleccion
-                )
-                if ok:
-                    st.session_state.estado = nuevo_estado
-                    guardar_partida(CODIGO, nuevo_estado)
-                    st.success(msg)
-                    st.rerun()
-                else:
-                    st.error(msg)
 
 
 

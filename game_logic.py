@@ -544,41 +544,64 @@ def existe_partida(codigo: str) -> bool:
 
 import copy
 
-def ejecutar_fusion_con_seleccion(estado, equipo, paquete_id, cartas_seleccionadas):
+def ejecutar_fusion_con_seleccion(estado, equipo, seleccion_rutas, FUSIONES_PAQUETES):
     """
-    cartas_seleccionadas: lista de rutas (strings) de actividades elegidas por el usuario
+    - seleccion_rutas: lista de rutas seleccionadas (o ids)
+    - FUSIONES_PAQUETES: dict {paquete_id: [ids_actividades_requeridas]}
     """
     nuevo_estado = copy.deepcopy(estado)
     equipo = str(equipo)
-    paquete_id = int(paquete_id)
 
-    # requisitos del paquete
-    actividades_necesarias = FUSIONES_PAQUETES.get(paquete_id)
-    if not actividades_necesarias:
-        return estado, False, "Paquete no existe en FUSIONES_PAQUETES"
+    ids_sel = sorted({extraer_id(r) for r in seleccion_rutas})  # set->list ordenada
 
-    # validar selección: convertir rutas a ids
-    ids_sel = [extraer_id(c) for c in cartas_seleccionadas]
+    # busca un paquete cuya lista requerida coincida EXACTAMENTE con la selección
+    paquete_id_match = None
+    for pid, req in FUSIONES_PAQUETES.items():
+        req_ids = sorted(int(x) for x in req)
+        if req_ids == ids_sel:
+            paquete_id_match = int(pid)
+            break
 
-    # 1) que todas las seleccionadas pertenezcan al mazo
-    mazo = nuevo_estado["mazos"].get(equipo, [])
-    if any(c not in mazo for c in cartas_seleccionadas):
-        return estado, False, "Has seleccionado cartas que no están en tu mazo"
+    if paquete_id_match is None:
+        return estado, False, "La selección no corresponde a ninguna fusión válida."
 
-    # 2) que la selección sea EXACTAMENTE la necesaria (mismo conjunto)
-    if set(ids_sel) != set(actividades_necesarias):
-        return estado, False, "La selección no coincide con las actividades requeridas"
+    # delega en tu ejecutar_fusion “normal”
+    nuevo_estado, ok = ejecutar_fusion(nuevo_estado, equipo, paquete_id_match)
+    if not ok:
+        return estado, False, "No se pudo ejecutar la fusión (faltan cartas requeridas)."
 
-    # eliminar SOLO las seleccionadas
-    nuevo_estado["mazos"][equipo] = [c for c in mazo if c not in cartas_seleccionadas]
+    return nuevo_estado, True, f"Fusión correcta → Paquete {paquete_id_match}"
 
-    # añadir paquete completado
-    nuevo_estado.setdefault("proyectos", {})
-    nuevo_estado["proyectos"].setdefault(equipo, []).append(str(paquete_id))
-
-    return nuevo_estado, True, "Fusión realizada"
 
 def paquetes_que_coinciden(ids_actividades):
     ids = set(ids_actividades)
     return [pid for pid, req in FUSIONES_PAQUETES.items() if set(req) == ids]
 
+import os
+import re
+import copy
+
+def extraer_id(ruta_o_id):
+    """
+    Acepta:
+      - int (85)
+      - "85"
+      - ".../Actividades/85.jpg"
+      - "imagenes/.../85.jpg"
+    Devuelve int: 85
+    """
+    if isinstance(ruta_o_id, int):
+        return ruta_o_id
+    s = str(ruta_o_id).strip()
+    # si es un número directo
+    if s.isdigit():
+        return int(s)
+    # si es ruta -> coge el último número antes de .jpg/.png
+    m = re.search(r'(\d+)(?=\.(jpg|jpeg|png)$)', s, flags=re.IGNORECASE)
+    if m:
+        return int(m.group(1))
+    # fallback: último grupo numérico del string
+    m2 = re.findall(r'\d+', s)
+    if m2:
+        return int(m2[-1])
+    raise ValueError(f"No puedo extraer id de: {ruta_o_id}")
