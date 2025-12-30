@@ -540,3 +540,45 @@ def crear_partida_si_no_existe(codigo: str) -> Dict[str, Any]:
 
 def existe_partida(codigo: str) -> bool:
     return _path_partida(codigo.strip().upper()).exists()
+
+
+import copy
+
+def ejecutar_fusion_con_seleccion(estado, equipo, paquete_id, cartas_seleccionadas):
+    """
+    cartas_seleccionadas: lista de rutas (strings) de actividades elegidas por el usuario
+    """
+    nuevo_estado = copy.deepcopy(estado)
+    equipo = str(equipo)
+    paquete_id = int(paquete_id)
+
+    # requisitos del paquete
+    actividades_necesarias = FUSIONES_PAQUETES.get(paquete_id)
+    if not actividades_necesarias:
+        return estado, False, "Paquete no existe en FUSIONES_PAQUETES"
+
+    # validar selección: convertir rutas a ids
+    ids_sel = [extraer_id(c) for c in cartas_seleccionadas]
+
+    # 1) que todas las seleccionadas pertenezcan al mazo
+    mazo = nuevo_estado["mazos"].get(equipo, [])
+    if any(c not in mazo for c in cartas_seleccionadas):
+        return estado, False, "Has seleccionado cartas que no están en tu mazo"
+
+    # 2) que la selección sea EXACTAMENTE la necesaria (mismo conjunto)
+    if set(ids_sel) != set(actividades_necesarias):
+        return estado, False, "La selección no coincide con las actividades requeridas"
+
+    # eliminar SOLO las seleccionadas
+    nuevo_estado["mazos"][equipo] = [c for c in mazo if c not in cartas_seleccionadas]
+
+    # añadir paquete completado
+    nuevo_estado.setdefault("proyectos", {})
+    nuevo_estado["proyectos"].setdefault(equipo, []).append(str(paquete_id))
+
+    return nuevo_estado, True, "Fusión realizada"
+
+def paquetes_que_coinciden(ids_actividades):
+    ids = set(ids_actividades)
+    return [pid for pid, req in FUSIONES_PAQUETES.items() if set(req) == ids]
+

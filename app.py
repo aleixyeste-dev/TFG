@@ -18,6 +18,7 @@ from game_logic import (
     guardar_partida,
     crear_partida_si_no_existe,
     existe_partida,
+    paquetes_que_coinciden,
 
 )
 
@@ -183,24 +184,51 @@ def mostrar_fusiones(col, equipo):
     with col:
         st.subheader("Fusiones posibles")
 
-        mazo = estado["mazos"].get(str(equipo), [])
-        posibles = fusiones_disponibles(mazo)
+        equipo = str(equipo)
+        mazo = estado["mazos"].get(equipo, [])
 
-        if not posibles:
-            st.info("No hay cartas para fusionar")
+        if not mazo:
+            st.info("No hay cartas todavía")
             return
 
-        for fusion in posibles:
-            paquete_id = fusion["paquete"]
+        # --- Selección de cartas ---
+        st.markdown("**Selecciona las actividades que quieres usar:**")
+        seleccion = []
+        for i, ruta in enumerate(mazo):
+            if st.checkbox(f"{ruta}", key=f"sel_{equipo}_{i}"):
+                seleccion.append(ruta)
 
-            if st.button(
-                f"Fusionar Paquete {paquete_id}", key=f"fusion_{equipo}_{paquete_id}"
-            ):
-                nuevo_estado, ok = ejecutar_fusion(estado, equipo, paquete_id)
+        # si no seleccionas nada, no hacemos nada
+        if not seleccion:
+            st.info("Selecciona cartas para intentar una fusión.")
+            return
 
+        # --- Comprobar qué paquetes podrían hacerse con esa selección ---
+        ids_sel = [extraer_id(r) for r in seleccion]
+
+        # paquetes que coinciden EXACTAMENTE con la selección
+        paquetes_ok = [
+            pid for pid, req in FUSIONES_PAQUETES.items()
+            if set(req) == set(ids_sel)
+        ]
+
+        if not paquetes_ok:
+            st.warning("La selección no corresponde a ninguna fusión válida.")
+            return
+
+        # si hay varios (raro, pero posible), los listamos
+        for paquete_id in paquetes_ok:
+            if st.button(f"Fusionar Paquete {paquete_id}", key=f"btn_fusion_{equipo}_{paquete_id}"):
+                nuevo_estado, ok, msg = ejecutar_fusion_con_seleccion(
+                    estado, equipo, paquete_id, seleccion
+                )
                 if ok:
+                    st.session_state.estado = nuevo_estado
                     guardar_partida(CODIGO, nuevo_estado)
+                    st.success(msg)
                     st.rerun()
+                else:
+                    st.error(msg)
 
 
 
