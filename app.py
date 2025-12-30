@@ -205,25 +205,25 @@ def mostrar_fusiones(col, equipo):
             key=f"sel_fusion_{equipo}"
         )
 
-            if st.button("Fusionar selección", key=f"btn_fusion_sel_{equipo}"):
-                nuevo_estado, ok, msg = ejecutar_fusion_con_seleccion(
-                    estado,
-                    equipo,
-                    seleccion,
-                    FUSIONES_PAQUETES,
+        if st.button("Fusionar selección", key=f"btn_fusion_sel_{equipo}"):
+            nuevo_estado, ok, msg = ejecutar_fusion_con_seleccion(
+                estado,
+                equipo,
+                seleccion,
+                FUSIONES_PAQUETES,
             )
 
-                if ok:
-                    # 1) Guardar en la partida compartida
-                    guardar_partida(CODIGO, nuevo_estado)
+            if ok:
+                # 1) Guardar en la partida compartida
+                guardar_partida(CODIGO, nuevo_estado)
 
-                    # 2) Limpiar selección (opcional, pero recomendado)
-                    st.session_state[f"sel_fusion_{equipo}"] = []
+                # 2) Limpiar selección (opcional, pero recomendado)
+                st.session_state[f"sel_fusion_{equipo}"] = []
 
-                    st.success(msg)
-                    st.rerun()
-                else:
-                    st.warning(msg)
+                st.success(msg)
+                st.rerun()
+            else:
+                st.warning(msg)
 
 
 
