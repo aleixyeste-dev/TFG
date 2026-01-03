@@ -210,13 +210,11 @@ def proyecto_asignado(estado, equipo):
 
 def ruta_paquete(paquete_id, proyecto_id):
     return os.path.join(
-        IMG_DIR,
-        "Proyectos",
-        str(proyecto_id),
-        "Entregables",
-        "Paquete trabajo",
-        f"{paquete_id}.jpg",
+        IMG_DIR, "Proyectos", str(proyecto_id),
+        "Entregables", "Paquete trabajo",
+        f"{int(paquete_id)}.jpg"
     )
+
 
 
 
@@ -262,25 +260,27 @@ def ejecutar_fusion(estado, equipo, paquete_id):
     paquete_id = int(paquete_id)
 
     actividades_necesarias = FUSIONES_PAQUETES[paquete_id]
+    ids_necesarios = {extraer_id(x) for x in actividades_necesarias}
 
     # eliminar actividades usadas
     nuevo_estado["mazos"][equipo] = [
         c for c in nuevo_estado["mazos"][equipo]
-        if extraer_id(c) not in actividades_necesarias
+        if extraer_id(c) not in ids_necesarios
     ]
 
+    # (esto lo puedes dejar aunque no lo uses)
     proyecto_id = proyecto_asignado(estado, equipo)
 
     # Asegurar estructura
-    equipo = str(equipo)
     nuevo_estado.setdefault("proyectos", {})
     nuevo_estado["proyectos"].setdefault(equipo, [])
 
-    # Guardar el ID del paquete (NO la ruta)
+    # Guardar el ID del paquete
     if paquete_id not in nuevo_estado["proyectos"][equipo]:
         nuevo_estado["proyectos"][equipo].append(paquete_id)
 
     return nuevo_estado, True
+
 
 
 
@@ -541,36 +541,19 @@ def existe_partida(codigo: str) -> bool:
 
 import copy
 
-import re
+import os, re
 
-def _extraer_id_carta(x) -> int | None:
-    """
-    Acepta: 55, "55", "55.jpg", "/ruta/a/55.jpg"
-    Devuelve: 55 (int) o None si no puede.
-    """
+def _extraer_id_carta(x):
     if x is None:
         return None
-    if isinstance(x, int):
-        return x
-    s = str(x).strip()
+    s = str(x)
+    base = os.path.basename(s)          # "85.jpg" aunque venga ruta completa
+    m = re.search(r"(\d+)", base)       # pilla el número
+    return int(m.group(1)) if m else None
 
-    # Caso "55" (solo número)
-    if s.isdigit():
-        return int(s)
-
-    # Caso ".../55.jpg" o "55.jpg"
-    m = re.search(r"(\d+)\.jpg$", s, flags=re.IGNORECASE)
-    if m:
-        return int(m.group(1))
-
-    return None
 
 
 def ejecutar_fusion_con_seleccion(estado, equipo, seleccion):
-    """
-    seleccion: lista de strings (ej: ["55.jpg","56.jpg",...]) o rutas completas.
-    Devuelve SIEMPRE: (nuevo_estado, ok, msg)
-    """
     # Normaliza a ids
     ids = []
     for item in (seleccion or []):
@@ -578,24 +561,34 @@ def ejecutar_fusion_con_seleccion(estado, equipo, seleccion):
         if cid is not None:
             ids.append(cid)
 
-    if not ids:
-        return estado, False, "No has seleccionado cartas válidas."
-
-    # Busca una fusión cuyo requisito coincida EXACTO con la selección
     ids_set = set(ids)
+
+    if not ids_set:
+        return estado, False, "No has seleccionado cartas válidas (no pude extraer IDs)."
+
+    # Busca match exacto, pero con feedback
+    mejor_msg = None
 
     for paquete_id, req in FUSIONES_PAQUETES.items():
         try:
             req_set = set(int(r) for r in req)
         except Exception:
-            # por si req ya viene como ints o hay algún string raro
             req_set = set(req)
 
         if ids_set == req_set:
-            # Reutiliza tu lógica existente (la que ya elimina actividades y añade el paquete)
             nuevo_estado, ok = ejecutar_fusion(estado, equipo, int(paquete_id))
             if ok:
                 return nuevo_estado, True, f"Fusión correcta → Paquete {paquete_id} creado."
-            return estado, False, "No se pudo ejecutar la fusión (requisitos internos no cumplidos)."
+            return estado, False, "Encontré la fusión, pero ejecutar_fusion devolvió False."
 
-    return estado, False, "La selección no corresponde a ninguna fusión válida."
+        # diagnóstico: qué falta y qué sobra respecto a esta fusión
+        faltan = sorted(req_set - ids_set)
+        sobran = sorted(ids_set - req_set)
+
+        # qué fusión está "más cerca" (menos diferencias)
+        score = len(faltan) + len(sobran)
+        msg = f"No coincide con Paquete {paquete_id}. Faltan: {faltan} | Sobran: {sobran}"
+        if mejor_msg is None or score < mejor_msg[0]:
+            mejor_msg = (score, msg)
+
+    return estado, False, mejor_msg[1] if mejor_msg else "La selección no corresponde a ninguna fusión válida."

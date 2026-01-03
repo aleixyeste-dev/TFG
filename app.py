@@ -245,14 +245,21 @@ def mostrar_proyectos(col, equipo):
             return
 
         proyecto_id = proyecto_asignado(estado, equipo)
+        if not proyecto_id:
+            st.error("No hay proyecto asignado a este equipo (proyecto_id es None).")
+            return
 
         for pid in paquetes_ids:
-            ruta = ruta_paquete(pid, proyecto_id)
+            ruta = ruta_paquete(int(pid), int(proyecto_id))
+
+            # DEBUG útil (puedes quitarlo luego):
+            # st.write("DEBUG ruta paquete:", ruta)
 
             if os.path.exists(ruta):
                 st.image(ruta, width=180)
             else:
                 st.error(f"Imagen no encontrada: {ruta}")
+
 
 
 
