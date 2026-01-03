@@ -16,18 +16,11 @@ from game_logic import (
     siguiente_ronda,
 )
 
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-IMG_DIR = os.path.join(BASE_DIR, "imagenes")
-
-
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 IMG_DIR = os.path.join(BASE_DIR, "imagenes")
 
 
-
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-IMG_DIR = os.path.join(BASE_DIR, "imagenes")
 
 # ---------------------------------
 # CONFIGURACIÓN
