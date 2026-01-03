@@ -221,7 +221,7 @@ def mostrar_fusiones(col, equipo):
                 st.rerun()
             else:
                 st.warning(msg)
-)
+
 
 
 
