@@ -21,6 +21,7 @@ from game_logic import (
     crear_partida_si_no_existe,
     existe_partida,
     paquetes_que_coinciden,
+    _extraer_id_carta,
     ejecutar_fusion_con_seleccion,
 
 )
