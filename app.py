@@ -14,6 +14,8 @@ from game_logic import (
 
     entregables_disponibles,
     proyectos_disponibles,
+    proyecto_asignado,
+    ruta_paquete,
 
     cargar_partida,
     guardar_partida,
@@ -185,15 +187,12 @@ def mostrar_fusiones(col, equipo):
 
         equipo = str(equipo)
         sel_key = f"sel_fusion_{equipo}"
-        clear_key = f"clear_sel_fusion_{equipo}"
+        clear_key = f"clear_sel_{equipo}"
 
-        # 0) Inicializa flags/estado
         if clear_key not in st.session_state:
             st.session_state[clear_key] = False
-        if sel_key not in st.session_state:
-            st.session_state[sel_key] = []
 
-        # 1) Si venimos de una fusión OK, limpiar ANTES de crear el widget
+        # Limpia ANTES de crear el widget (en el rerun siguiente)
         if st.session_state[clear_key]:
             st.session_state[sel_key] = []
             st.session_state[clear_key] = False
@@ -203,7 +202,6 @@ def mostrar_fusiones(col, equipo):
             st.info("No hay actividades para fusionar")
             return
 
-        # 2) Multiselect: NO uses default si gestionas el valor por key
         st.multiselect(
             "Selecciona las actividades a fusionar",
             options=actividades,
@@ -211,25 +209,19 @@ def mostrar_fusiones(col, equipo):
             key=sel_key
         )
 
-        # 3) Lee la selección desde session_state
-        seleccion = st.session_state[sel_key]
+        seleccion = st.session_state.get(sel_key, [])
 
         if st.button("Fusionar selección", key=f"btn_fusion_sel_{equipo}"):
-            nuevo_estado, ok, msg = ejecutar_fusion_con_seleccion(
-                estado, equipo, seleccion
-            )
+            nuevo_estado, ok, msg = ejecutar_fusion_con_seleccion(estado, equipo, seleccion)
 
             if ok:
                 st.session_state.estado = nuevo_estado
-                guardar_partida(CODIGO, nuevo_estado)
-
-                # 4) Marca limpieza para el siguiente rerun (NO limpiar aquí)
-                st.session_state[clear_key] = True
-
+                st.session_state[clear_key] = True  # se limpiará en el rerun
                 st.success(msg)
                 st.rerun()
             else:
                 st.warning(msg)
+)
 
 
 
