@@ -204,7 +204,6 @@ def mostrar_fusiones(col, equipo):
         seleccion = st.multiselect(
             "Selecciona las actividades a fusionar",
             options=actividades,
-            default=st.session_state.get(sel_key, []),
             format_func=lambda r: os.path.basename(str(r)),
             key=sel_key
         )
