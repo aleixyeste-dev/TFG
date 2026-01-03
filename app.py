@@ -1,5 +1,5 @@
 import os
-from pathlib import Path
+
 import streamlit as st
 
 from game_logic import (
@@ -14,22 +14,113 @@ from game_logic import (
     inicializar_juego,
     proyectos_disponibles,
     siguiente_ronda,
+    extraer_id,
+    FUSIONES_PAQUETES,
+    cargar_partida,
+    guardar_partida,
+    crear_partida_si_no_existe,
+    existe_partida,
+    paquetes_que_coinciden,
+    ejecutar_fusion_con_seleccion,
+
 )
 
+st.set_page_config(
+    page_icon="🧠",
+    page_title="🧠 BIVRA – Partida compartida",
+    layout="wide",
+    initial_sidebar_state="expanded",
+)
 
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-IMG_DIR = os.path.join(BASE_DIR, "imagenes")
+from pathlib import Path
+
+BASE_DIR = Path(__file__).resolve().parent
+
+def abs_path(ruta_relativa: str) -> str:
+    p = Path(ruta_relativa)
+    if p.is_absolute():
+        return str(p)
+    return str((BASE_DIR / p).resolve())
+
+
+def mostrar_fin_partida(estado: dict):
+    if estado.get("finalizado", False):
+        ganador = estado.get("ganador", "?")
+        st.success(f"🏆 Partida finalizada. ¡Gana el Equipo {ganador}!")
+
+def bloquear_si_finalizado(estado: dict):
+    if estado.get("finalizado", False):
+        mostrar_fin_partida(estado)
+        st.stop()
+# ---------------------------------
+# ESTADO GLOBAL (ANTES de leer estado)
+# ---------------------------------
+# ---------------------------------
+# SIDEBAR: Crear / Unirse
+# ---------------------------------
+def codigo_valido(c: str) -> bool:
+    c = c.strip().upper()
+    return len(c) >= 4 and c.isalnum()
+
+with st.sidebar:
+    st.header("🎮 Partidas")
+    codigo = st.text_input(
+        "Código de partida",
+        value=st.session_state.get("codigo", ""),
+        placeholder="Ej: ABC123",
+        key="codigo_sidebar",
+    ).strip().upper()
+
+    equipo = st.radio("Tu equipo", [1, 2], index=0, key="equipo_sidebar")
+
+    colA, colB = st.columns(2)
+    crear = colA.button("Crear")
+    unirse = colB.button("Unirse")
+
+    if crear:
+        if not codigo_valido(codigo):
+            st.error("Código inválido (mínimo 4 caracteres alfanuméricos).")
+        else:
+            crear_partida_si_no_existe(codigo)
+            st.session_state.codigo = codigo
+            st.session_state.equipo = equipo
+            st.success(f"Partida {codigo} creada / cargada.")
+            st.rerun()
+
+    if unirse:
+        if not codigo_valido(codigo):
+            st.error("Código inválido (mínimo 4 caracteres alfanuméricos).")
+        elif not existe_partida(codigo):
+            st.error("Esa partida no existe.")
+        else:
+            st.session_state.codigo = codigo
+            st.session_state.equipo = equipo
+            st.success(f"Unido a {codigo} como equipo {equipo}.")
+            st.rerun()
+
+# ---------------------------------
+# SI NO HAY CÓDIGO, PARAMOS AQUÍ (PERO LA SIDEBAR YA EXISTE)
+# ---------------------------------
+if "codigo" not in st.session_state or not st.session_state.codigo:
+    st.info("Introduce un código en la barra lateral para crear o unirte a una partida.")
+    st.stop()
+
+CODIGO = st.session_state.codigo
+
+# ---------------------------------
+# CARGA ESTADO PARTIDA
+# ---------------------------------
+estado = cargar_partida(CODIGO)
+if estado is None:
+    estado = crear_partida_si_no_existe(CODIGO)
+
+bloquear_si_finalizado(estado)
 
 
 
 # ---------------------------------
 # CONFIGURACIÓN
 # ---------------------------------
-st.set_page_config(
-    page_icon="🧠",
-    page_title="🧠 BIVRA – Partida compartida",
-    layout="wide",
-)
 
 st.title("🧠 BIVRA - Partida compartida")
 
@@ -46,13 +137,6 @@ def cargar_datos():
 
 estructura, agrupaciones = cargar_datos()
 
-# ---------------------------------
-# ESTADO GLOBAL
-# ---------------------------------
-if "estado" not in st.session_state:
-    st.session_state.estado = inicializar_juego()
-
-estado = st.session_state.estado
 
 # ---------------------------------
 # ACCIONES
@@ -60,15 +144,21 @@ estado = st.session_state.estado
 col_a, col_b = st.columns(2)
 
 with col_a:
-    if st.button("▶️ Siguiente ronda (acción compartida)"):
+    if st.button("▶️ Siguiente ronda (acción compartida)", key="btn_siguiente_ronda"):
         estado, eventos = siguiente_ronda(estado, estructura, agrupaciones)
-        st.session_state.estado = estado
+        guardar_partida(CODIGO, estado)
         st.rerun()
+
+
 
 with col_b:
     if st.button("🔄 Reiniciar partida (para todos)"):
-        st.session_state.estado = inicializar_juego()
+        estado = inicializar_juego()
+    # opcional: guardar el código dentro del estado
+        estado["codigo_partida"] = CODIGO
+        guardar_partida(CODIGO, estado)
         st.rerun()
+
         
 
 
@@ -92,51 +182,49 @@ def mostrar_equipo(col, equipo):
         for carta in mazo:
             st.image(carta, width=160)
 
-
 def mostrar_fusiones(col, equipo):
     with col:
         st.subheader("Fusiones (selecciona cartas)")
-        st.caption("Selecciona las actividades a fusionar")
 
         equipo = str(equipo)
-        mazo_ids = estado.get("mazos", {}).get(equipo, [])
-
-        if not mazo_ids:
-            st.info("No tienes actividades en el mazo")
-            return
-
-        # Construye rutas (para que la UI muestre algo legible)
-        proyecto_id = str(estado.get("proyectos_asignados", {}).get(equipo, "1"))
-        opciones = [
-            f"imagenes/Proyectos/{proyecto_id}/Entregables/Paquete trabajo/Actividades/{int(a)}.jpg"
-            for a in mazo_ids
-        ]
-
         sel_key = f"sel_fusion_{equipo}"
-        clear_key = f"clear_fusion_{equipo}"
+        clear_key = f"clear_sel_{equipo}"
 
-        # Si en la ejecución anterior se fusionó, limpiamos ANTES de crear el widget
-        if st.session_state.get(clear_key, False):
+        # 1) Inicializa bandera
+        if clear_key not in st.session_state:
+            st.session_state[clear_key] = False
+
+        # 2) Si venimos de una fusión correcta, limpiamos ANTES de crear el multiselect
+        if st.session_state[clear_key]:
             st.session_state[sel_key] = []
             st.session_state[clear_key] = False
 
+        actividades = estado["mazos"].get(equipo, [])
+        if not actividades:
+            st.info("No hay actividades para fusionar")
+            return
+
         seleccion = st.multiselect(
             "Selecciona las actividades a fusionar",
-            options=opciones,
-            key=sel_key,
-            format_func=lambda p: Path(p).name,  # muestra "102.jpg"
+            options=actividades,
+            default=st.session_state.get(sel_key, []),
+            format_func=lambda r: os.path.basename(str(r)),
+            key=sel_key
         )
 
         if st.button("Fusionar selección", key=f"btn_fusion_sel_{equipo}"):
-            nuevo_estado, ok, msg = ejecutar_fusion_con_seleccion(estado, equipo, seleccion)
+            nuevo_estado, ok, msg = ejecutar_fusion_con_seleccion(
+                estado, equipo, seleccion
+            )
 
             if ok:
-                st.success(msg)
                 st.session_state.estado = nuevo_estado
-                st.session_state[clear_key] = True  # limpiar selección en el siguiente rerun
+                st.session_state[clear_key] = True   # <- se limpia en el siguiente rerun
+                st.success(msg)
                 st.rerun()
             else:
                 st.warning(msg)
+
 
 
 def mostrar_proyectos(col, equipo):
@@ -177,8 +265,9 @@ def mostrar_entregables(col, equipo):
                 )
 
                 if ok:
-                    st.session_state.estado = nuevo_estado
+                    guardar_partida(CODIGO, nuevo_estado)
                     st.rerun()
+
                 else:
                     st.warning("❌ No se cumplen los requisitos para este entregable")
 
@@ -218,11 +307,12 @@ def mostrar_proyectos2(col, equipo):
             ):
                 nuevo_estado, ok = ejecutar_proyecto(estado, equipo, proyecto_id)
                 if ok:
-                    st.session_state.estado = nuevo_estado
+                    guardar_partida(CODIGO, nuevo_estado)
                     st.rerun()
 
 
-                    st.experimental_rerun()
+
+                    
 
 
                     
@@ -230,13 +320,21 @@ def mostrar_proyecto_final(col, equipo):
     with col:
         st.subheader("Proyecto completado")
 
-        proyectos = estado.get("proyecto_final", {}).get(str(equipo), [])
-        if not proyectos:
+        equipo = str(equipo)
+        proyectos_finales = estado.get("proyectos_finales", {})
+        lista = proyectos_finales.get(equipo, [])
+
+        if not lista:
             st.info("Aún no se ha completado el proyecto")
             return
 
-        for ruta in proyectos:
-            st.image(ruta, width=220)
+        for ruta_rel in lista:
+            ruta_abs = abs_path(ruta_rel)
+            if not Path(ruta_abs).exists():
+                st.error(f"Imagen no encontrada: {ruta_rel}")
+            else:
+                st.image(ruta_abs, width=220)
+
             
 
 

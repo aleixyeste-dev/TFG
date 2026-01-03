@@ -219,6 +219,18 @@ def ruta_paquete(paquete_id, proyecto_id):
     )
 
 
+from pathlib import Path
+
+BASE_DIR = Path(__file__).resolve().parent  # carpeta TFG (donde están los scripts)
+
+def ruta_proyecto(proyecto_id: int) -> str | None:
+    # tus proyectos están aquí: imagenes/Proyectos/<id>/<id>.<ext>
+    for ext in ("jpg", "png", "jpeg", "webp"):
+        rel = f"imagenes/Proyectos/{proyecto_id}/{proyecto_id}.{ext}"
+        if (BASE_DIR / rel).exists():
+            return rel
+    return None
+
 
 
 def aplicar_fusion(estado, equipo, paquete_id):
@@ -299,45 +311,6 @@ def extraer_id(ruta):
 
 
 from entregables import ENTREGABLES
-
-
-def ejecutar_fusion_con_seleccion(estado, equipo, seleccion):
-    """Fusiona actividades -> paquete de trabajo a partir de una selección explícita.
-
-    seleccion: lista de rutas/labels seleccionadas en la UI (p.ej. "102.jpg" o una ruta completa).
-    Devuelve (nuevo_estado, ok, msg).
-    """
-    equipo = str(equipo)
-
-    if not seleccion:
-        return estado, False, "Selecciona actividades primero."
-
-    # Normaliza a ids (int)
-    try:
-        ids_sel = sorted({int(extraer_id(x)) for x in seleccion})
-    except Exception:
-        return estado, False, "No se pudo interpretar la selección."
-
-    # Busca qué paquete corresponde EXACTAMENTE a esa selección
-    paquete_id_match = None
-    for paquete_id, req in FUSIONES_PAQUETES.items():
-        try:
-            req_ids = sorted(int(r) for r in req)
-        except Exception:
-            continue
-        if ids_sel == req_ids:
-            paquete_id_match = int(paquete_id)
-            break
-
-    if paquete_id_match is None:
-        return estado, False, "La selección no corresponde a ninguna fusión válida."
-
-    # Ejecuta la fusión normal (quita actividades y añade el paquete)
-    nuevo_estado, ok = ejecutar_fusion(estado, equipo, paquete_id_match)
-    if not ok:
-        return estado, False, "No se cumplen los requisitos para esa fusión."
-
-    return nuevo_estado, True, f"Paquete {paquete_id_match} creado."
 
 def entregables_disponibles(paquetes_del_equipo):
     ids_paquetes = {extraer_id_desde_ruta(p) for p in paquetes_del_equipo}
@@ -457,9 +430,178 @@ def ejecutar_proyecto(estado, equipo, proyecto_id):
     ]
 
     # añadir proyecto final
-    ruta = f"imagenes/Proyectos/{proyecto_id}.jpg"
-    nuevo_estado.setdefault("proyecto_final", {}).setdefault(equipo, []).append(ruta)
-     nuevo_estado.setdefault("proyecto_final", {}).setdefault(equipo, []).append(ruta)
+    ruta = f"imagenes/Proyectos/{proyecto_id}/{proyecto_id}.jpg"
 
+    nuevo_estado.setdefault("proyectos_finales", {})
+    nuevo_estado["proyectos_finales"].setdefault(str(equipo), []).append(ruta)
+
+    if not nuevo_estado.get("finalizado", False) and comprobar_fin_partida(nuevo_estado, equipo):
+        finalizar_partida(nuevo_estado, equipo)
+    
     return nuevo_estado, True
 
+
+def finalizar_partida(estado: dict, equipo) -> dict:
+    """
+    Marca la partida como finalizada y guarda el equipo ganador.
+    Devuelve el estado modificado (in-place, pero lo devolvemos por comodidad).
+    """
+    estado["finalizado"] = True
+    estado["ganador"] = str(equipo)
+    return estado
+
+
+def comprobar_fin_partida(estado: dict, equipo) -> bool:
+    """
+    Devuelve True si este equipo ya tiene al menos 1 proyecto final creado.
+    (Condición de victoria).
+    """
+    equipo = str(equipo)
+    proyectos_finales = estado.get("proyectos_finales", {})
+    lista = proyectos_finales.get(equipo, [])
+    return len(lista) >= 1
+
+def resetear_fin_partida(estado: dict) -> dict:
+    estado["finalizado"] = False
+    estado.pop("ganador", None)
+    return estado
+
+import json
+import os
+import time
+from pathlib import Path
+from typing import Any, Dict, Optional
+
+PARTIDAS_DIR = Path(__file__).resolve().parent / "partidas"
+PARTIDAS_DIR.mkdir(exist_ok=True)
+
+def _path_partida(codigo: str) -> Path:
+    codigo = codigo.strip().upper()
+    return PARTIDAS_DIR / f"{codigo}.json"
+
+def _path_lock(codigo: str) -> Path:
+    codigo = codigo.strip().upper()
+    return PARTIDAS_DIR / f"{codigo}.lock"
+
+def _adquirir_lock(codigo: str, timeout_s: float = 3.0) -> None:
+    """Lock simple por archivo (evita escrituras simultáneas)."""
+    lock_path = _path_lock(codigo)
+    inicio = time.time()
+    while True:
+        try:
+            fd = os.open(str(lock_path), os.O_CREAT | os.O_EXCL | os.O_WRONLY)
+            os.close(fd)
+            return
+        except FileExistsError:
+            if time.time() - inicio > timeout_s:
+                # si se queda colgado por un lock viejo, lo rompemos
+                try:
+                    lock_path.unlink()
+                except Exception:
+                    pass
+                return
+            time.sleep(0.05)
+
+def _liberar_lock(codigo: str) -> None:
+    try:
+        _path_lock(codigo).unlink()
+    except Exception:
+        pass
+
+def cargar_partida(codigo: str) -> Optional[Dict[str, Any]]:
+    path = _path_partida(codigo)
+    if not path.exists():
+        return None
+    try:
+        return json.loads(path.read_text(encoding="utf-8"))
+    except Exception:
+        return None
+
+def guardar_partida(codigo: str, estado: Dict[str, Any]) -> None:
+    codigo = codigo.strip().upper()
+    _adquirir_lock(codigo)
+    try:
+        path = _path_partida(codigo)
+        tmp = path.with_suffix(".tmp")
+        tmp.write_text(json.dumps(estado, ensure_ascii=False, indent=2), encoding="utf-8")
+        tmp.replace(path)  # escritura atómica
+    finally:
+        _liberar_lock(codigo)
+
+def crear_partida_si_no_existe(codigo: str) -> Dict[str, Any]:
+    codigo = codigo.strip().upper()
+    estado = cargar_partida(codigo)
+    if estado is None:
+        estado = inicializar_juego()  # <-- tu función existente
+        # opcional: guarda el código dentro del estado
+        estado["codigo_partida"] = codigo
+        guardar_partida(codigo, estado)
+    return estado
+
+def existe_partida(codigo: str) -> bool:
+    return _path_partida(codigo.strip().upper()).exists()
+
+
+import copy
+
+def ejecutar_fusion_con_seleccion(estado, equipo, seleccion_rutas, FUSIONES_PAQUETES):
+    """
+    - seleccion_rutas: lista de rutas seleccionadas (o ids)
+    - FUSIONES_PAQUETES: dict {paquete_id: [ids_actividades_requeridas]}
+    """
+    nuevo_estado = copy.deepcopy(estado)
+    equipo = str(equipo)
+
+    ids_sel = sorted({extraer_id(r) for r in seleccion_rutas})  # set->list ordenada
+
+    # busca un paquete cuya lista requerida coincida EXACTAMENTE con la selección
+    paquete_id_match = None
+    for pid, req in FUSIONES_PAQUETES.items():
+        req_ids = sorted(int(x) for x in req)
+        if req_ids == ids_sel:
+            paquete_id_match = int(pid)
+            break
+
+    if paquete_id_match is None:
+        return estado, False, "La selección no corresponde a ninguna fusión válida."
+
+    # delega en tu ejecutar_fusion “normal”
+    nuevo_estado, ok = ejecutar_fusion(nuevo_estado, equipo, paquete_id_match)
+    if not ok:
+        return estado, False, "No se pudo ejecutar la fusión (faltan cartas requeridas)."
+
+    return nuevo_estado, True, f"Fusión correcta → Paquete {paquete_id_match}"
+
+
+def paquetes_que_coinciden(ids_actividades):
+    ids = set(ids_actividades)
+    return [pid for pid, req in FUSIONES_PAQUETES.items() if set(req) == ids]
+
+import os
+import re
+import copy
+
+def extraer_id(ruta_o_id):
+    """
+    Acepta:
+      - int (85)
+      - "85"
+      - ".../Actividades/85.jpg"
+      - "imagenes/.../85.jpg"
+    Devuelve int: 85
+    """
+    if isinstance(ruta_o_id, int):
+        return ruta_o_id
+    s = str(ruta_o_id).strip()
+    # si es un número directo
+    if s.isdigit():
+        return int(s)
+    # si es ruta -> coge el último número antes de .jpg/.png
+    m = re.search(r'(\d+)(?=\.(jpg|jpeg|png)$)', s, flags=re.IGNORECASE)
+    if m:
+        return int(m.group(1))
+    # fallback: último grupo numérico del string
+    m2 = re.findall(r'\d+', s)
+    if m2:
+        return int(m2[-1])
+    raise ValueError(f"No puedo extraer id de: {ruta_o_id}")
