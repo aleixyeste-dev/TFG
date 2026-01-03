@@ -215,8 +215,9 @@ def ruta_paquete(paquete_id, proyecto_id):
         str(proyecto_id),
         "Entregables",
         "Paquete trabajo",
-        f"{paquete_id}.jpg",   # <-- AQUÍ el cambio (sin "paquete_")
+        f"{int(paquete_id)}.jpg",
     )
+
 
 
 
@@ -268,21 +269,15 @@ def ejecutar_fusion(estado, equipo, paquete_id):
     ]
 
     proyecto_id = proyecto_asignado(estado, equipo)
-    ruta = ruta_paquete(paquete_id, proyecto_id)
 
-    # guardar paquete completado
-    # Asegurar tipos correctos
+    # Asegurar estructura
     equipo = str(equipo)
+    nuevo_estado.setdefault("proyectos", {})
+    nuevo_estado["proyectos"].setdefault(equipo, [])
 
-    if "proyectos" not in nuevo_estado or not isinstance(nuevo_estado["proyectos"], dict):
-        nuevo_estado["proyectos"] = {}
-
-    if equipo not in nuevo_estado["proyectos"] or not isinstance(nuevo_estado["proyectos"][equipo], list):
-        nuevo_estado["proyectos"][equipo] = []
-
-    nuevo_estado["proyectos"][equipo].append(ruta)
-
-
+    # Guardar el ID del paquete (NO la ruta)
+    if paquete_id not in nuevo_estado["proyectos"][equipo]:
+        nuevo_estado["proyectos"][equipo].append(paquete_id)
 
     return nuevo_estado, True
 
