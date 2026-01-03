@@ -215,8 +215,9 @@ def ruta_paquete(paquete_id, proyecto_id):
         str(proyecto_id),
         "Entregables",
         "Paquete trabajo",
-        f"{int(paquete_id)}.jpg",
+        f"{paquete_id}.jpg",
     )
+
 
 
 
