@@ -1,5 +1,5 @@
 import os
-
+from pathlib import Path
 import streamlit as st
 
 from game_logic import (
@@ -14,9 +14,8 @@ from game_logic import (
     inicializar_juego,
     proyectos_disponibles,
     siguiente_ronda,
-    extraer_id,
-    ejecutar_fusion_con_seleccion,
 )
+
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 IMG_DIR = os.path.join(BASE_DIR, "imagenes")
 
