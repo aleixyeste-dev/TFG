@@ -544,64 +544,61 @@ def existe_partida(codigo: str) -> bool:
 
 import copy
 
-def ejecutar_fusion_con_seleccion(estado, equipo, seleccion_rutas, FUSIONES_PAQUETES):
-    """
-    - seleccion_rutas: lista de rutas seleccionadas (o ids)
-    - FUSIONES_PAQUETES: dict {paquete_id: [ids_actividades_requeridas]}
-    """
-    nuevo_estado = copy.deepcopy(estado)
-    equipo = str(equipo)
-
-    ids_sel = sorted({extraer_id(r) for r in seleccion_rutas})  # set->list ordenada
-
-    # busca un paquete cuya lista requerida coincida EXACTAMENTE con la selección
-    paquete_id_match = None
-    for pid, req in FUSIONES_PAQUETES.items():
-        req_ids = sorted(int(x) for x in req)
-        if req_ids == ids_sel:
-            paquete_id_match = int(pid)
-            break
-
-    if paquete_id_match is None:
-        return estado, False, "La selección no corresponde a ninguna fusión válida."
-
-    # delega en tu ejecutar_fusion “normal”
-    nuevo_estado, ok = ejecutar_fusion(nuevo_estado, equipo, paquete_id_match)
-    if not ok:
-        return estado, False, "No se pudo ejecutar la fusión (faltan cartas requeridas)."
-
-    return nuevo_estado, True, f"Fusión correcta → Paquete {paquete_id_match}"
-
-
-def paquetes_que_coinciden(ids_actividades):
-    ids = set(ids_actividades)
-    return [pid for pid, req in FUSIONES_PAQUETES.items() if set(req) == ids]
-
-import os
 import re
-import copy
 
-def extraer_id(ruta_o_id):
+def _extraer_id_carta(x) -> int | None:
     """
-    Acepta:
-      - int (85)
-      - "85"
-      - ".../Actividades/85.jpg"
-      - "imagenes/.../85.jpg"
-    Devuelve int: 85
+    Acepta: 55, "55", "55.jpg", "/ruta/a/55.jpg"
+    Devuelve: 55 (int) o None si no puede.
     """
-    if isinstance(ruta_o_id, int):
-        return ruta_o_id
-    s = str(ruta_o_id).strip()
-    # si es un número directo
+    if x is None:
+        return None
+    if isinstance(x, int):
+        return x
+    s = str(x).strip()
+
+    # Caso "55" (solo número)
     if s.isdigit():
         return int(s)
-    # si es ruta -> coge el último número antes de .jpg/.png
-    m = re.search(r'(\d+)(?=\.(jpg|jpeg|png)$)', s, flags=re.IGNORECASE)
+
+    # Caso ".../55.jpg" o "55.jpg"
+    m = re.search(r"(\d+)\.jpg$", s, flags=re.IGNORECASE)
     if m:
         return int(m.group(1))
-    # fallback: último grupo numérico del string
-    m2 = re.findall(r'\d+', s)
-    if m2:
-        return int(m2[-1])
-    raise ValueError(f"No puedo extraer id de: {ruta_o_id}")
+
+    return None
+
+
+def ejecutar_fusion_con_seleccion(estado, equipo, seleccion):
+    """
+    seleccion: lista de strings (ej: ["55.jpg","56.jpg",...]) o rutas completas.
+    Devuelve SIEMPRE: (nuevo_estado, ok, msg)
+    """
+    # Normaliza a ids
+    ids = []
+    for item in (seleccion or []):
+        cid = _extraer_id_carta(item)
+        if cid is not None:
+            ids.append(cid)
+
+    if not ids:
+        return estado, False, "No has seleccionado cartas válidas."
+
+    # Busca una fusión cuyo requisito coincida EXACTO con la selección
+    ids_set = set(ids)
+
+    for paquete_id, req in FUSIONES_PAQUETES.items():
+        try:
+            req_set = set(int(r) for r in req)
+        except Exception:
+            # por si req ya viene como ints o hay algún string raro
+            req_set = set(req)
+
+        if ids_set == req_set:
+            # Reutiliza tu lógica existente (la que ya elimina actividades y añade el paquete)
+            nuevo_estado, ok = ejecutar_fusion(estado, equipo, int(paquete_id))
+            if ok:
+                return nuevo_estado, True, f"Fusión correcta → Paquete {paquete_id} creado."
+            return estado, False, "No se pudo ejecutar la fusión (requisitos internos no cumplidos)."
+
+    return estado, False, "La selección no corresponde a ninguna fusión válida."
