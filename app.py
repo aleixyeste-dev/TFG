@@ -227,17 +227,23 @@ def mostrar_proyectos(col, equipo):
     with col:
         st.subheader("Paquetes completados")
 
-        proyectos = estado["proyectos"].get(str(equipo), [])
+        equipo = str(equipo)
+        paquetes_ids = estado.get("proyectos", {}).get(equipo, [])
 
-        if not proyectos:
+        if not paquetes_ids:
             st.info("Todavía no hay paquetes completados")
             return
 
-        for ruta in proyectos:
-            if isinstance(ruta, str) and os.path.exists(ruta):
+        proyecto_id = proyecto_asignado(estado, equipo)
+
+        for pid in paquetes_ids:
+            ruta = ruta_paquete(pid, proyecto_id)
+
+            if os.path.exists(ruta):
                 st.image(ruta, width=180)
             else:
                 st.error(f"Imagen no encontrada: {ruta}")
+
 
 
 def mostrar_entregables(col, equipo):
