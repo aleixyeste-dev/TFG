@@ -3,28 +3,24 @@ import os
 import streamlit as st
 
 from game_logic import (
-    aplicar_fusion,
     cargar_estructura_proyecto,
-    ejecutar_entregable,
-    ejecutar_fusion,
-    ejecutar_proyecto,
-    entregables_disponibles,
-    fusiones_disponibles,
     generar_diccionario_agrupaciones,
     inicializar_juego,
-    proyectos_disponibles,
     siguiente_ronda,
-    extraer_id,
-    FUSIONES_PAQUETES,
+
+    ejecutar_fusion_con_seleccion,
+    ejecutar_entregable,
+    ejecutar_proyecto,
+
+    entregables_disponibles,
+    proyectos_disponibles,
+
     cargar_partida,
     guardar_partida,
     crear_partida_si_no_existe,
     existe_partida,
-    paquetes_que_coinciden,
-    _extraer_id_carta,
-    ejecutar_fusion_con_seleccion,
-
 )
+
 
 st.set_page_config(
     page_icon="🧠",
