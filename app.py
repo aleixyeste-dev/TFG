@@ -182,7 +182,6 @@ def mostrar_entregables(col, equipo):
                 key=f"entregable_{equipo}_{entregable_id}",
             ):
                 nuevo_estado, ok = ejecutar_entregable(
-                    estado, equipo, int(entregable_id)
                     estado, equipo, int(entregable_id)  # 👈 MUY IMPORTANTE
                 )
 
