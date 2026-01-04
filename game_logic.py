@@ -3,106 +3,55 @@ import os
 import random
 import re
 
-import fusiones
-
-
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 IMG_DIR = os.path.join(BASE_DIR, "imagenes")
 
-
-FUSIONES_PAQUETES = fusiones.FUSIONES_PAQUETES
-# ==============================
-# Utilidades
-# ==============================
+try:
+    import fusiones
+    FUSIONES_PAQUETES = fusiones.FUSIONES_PAQUETES
+except Exception as e:
+    FUSIONES_PAQUETES = {}
+    print("ERROR: no se pudo cargar 'fusiones.py' o FUSIONES_PAQUETES:", e)
 
 def natural_key(text):
     return [int(c) if c.isdigit() else c for c in re.split(r"(\d+)", text)]
-
 
 def normalizar_estado(estado):
     estado.setdefault("ronda", 0)
     estado.setdefault("historial", [])
     estado.setdefault("mazos", {"1": [], "2": []})
-    estado.setdefault("proyectos", {})  # paquetes completados por equipo
+    estado.setdefault("proyectos", {})
     estado.setdefault("proyectos_asignados", {})
     estado.setdefault("finalizado", False)
     return estado
 
-
-
 def cargar_proyectos_desde_txt():
     proyectos = {}
-
-    with open("relacionesproyectos.txt", "r", encoding="utf-8") as f:
+    ruta_txt = os.path.join(BASE_DIR, "relacionesproyectos.txt")
+    with open(ruta_txt, "r", encoding="utf-8") as f:
         for linea in f:
             linea = linea.strip()
             if not linea or ":" not in linea:
                 continue
 
-            izquierda, derecha = linea.split(":")
-
-            # "Proyecto 1" -> 1
+            izquierda, derecha = linea.split(":", 1)
             proyecto_id = int(izquierda.replace("Proyecto", "").strip())
-
             entregables = [int(x.strip()) for x in derecha.split(",")]
-
             proyectos[proyecto_id] = entregables
 
     return proyectos
 
+PROYECTOS = None
 
-
-
-PROYECTOS = cargar_proyectos_desde_txt()
-
-
-# ==============================
-# Inicialización
-# ==============================
-
-def inicializar_juego():
-    return {
-        "ronda": 0,
-        "historial": [],
-        "mazos": {"1": [], "2": []},
-        "proyectos": {},
-        "proyectos_asignados": {},
-        "finalizado": False,
-    }
-
-
-# ==============================
-# Carga estructura
-# ==============================
-
-def cargar_estructura_proyecto():
-    base_path = os.path.join(IMG_DIR, "Proyectos")
-
-    if not os.path.exists(base_path):
-        raise RuntimeError(f"No existe la ruta {base_path}")
-
-    estructura = {}
-    for pid in sorted(os.listdir(base_path)):
-        ruta_proyecto = os.path.join(base_path, pid)
-        if not os.path.isdir(ruta_proyecto):
-            continue
-
-        actividades = []
-        ruta_actividades = os.path.join(
-            ruta_proyecto, "Entregables", "Paquete trabajo", "Actividades"
-        )
-
-        if os.path.exists(ruta_actividades):
-            for f in os.listdir(ruta_actividades):
-                if f.lower().endswith(".jpg"):
-                    actividades.append(os.path.join(ruta_actividades, f))
-
-        estructura[pid] = {
-            "actividades": actividades
-        }
-
-    return estructura
-
+def get_proyectos():
+    global PROYECTOS
+    if PROYECTOS is None:
+        try:
+            PROYECTOS = cargar_proyectos_desde_txt()
+        except Exception as e:
+            PROYECTOS = {}
+            print("ERROR cargando relacionesproyectos.txt:", e)
+    return PROYECTOS
 
 
 # ==============================
