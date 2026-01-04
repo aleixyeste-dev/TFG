@@ -50,9 +50,27 @@ def normalizar_estado(estado):
     estado.setdefault("ronda", 0)
     estado.setdefault("historial", [])
     estado.setdefault("mazos", {"1": [], "2": []})
-    estado.setdefault("proyectos", {})  # paquetes completados por equipo
+    estado.setdefault("proyectos", {})
     estado.setdefault("proyectos_asignados", {})
     estado.setdefault("finalizado", False)
+
+    # ✅ Migración: convertir proyectos a IDs int (por si hay rutas antiguas)
+    proyectos = estado.get("proyectos", {})
+    if isinstance(proyectos, dict):
+        for eq, lista in proyectos.items():
+            if not isinstance(lista, list):
+                continue
+            nueva = []
+            for x in lista:
+                if isinstance(x, int):
+                    nueva.append(x)
+                else:
+                    pid = extraer_id(x)
+                    if pid is not None:
+                        nueva.append(pid)
+            # sin duplicados
+            proyectos[eq] = list(dict.fromkeys(nueva))
+
     return estado
 
 
