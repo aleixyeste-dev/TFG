@@ -459,20 +459,18 @@ mostrar_fusiones(col1, 1)
 mostrar_proyectos(col1, 1)
 mostrar_entregables(col1, 1)
 mostrar_entregables_creados(col1, 1)
-mostrar_entregables_seleccion(col1, 1)
 mostrar_proyectos2(col1, 1)
 mostrar_proyecto_final(col1, 1)
-mostrar_proyecto_final_seleccion(col1, 1)
+
 
 mostrar_equipo(col2, 2)
 mostrar_fusiones(col2, 2)
 mostrar_proyectos(col2, 2)
 mostrar_entregables(col2, 2)
 mostrar_entregables_creados(col2, 2)
-mostrar_entregables_seleccion(col2, 2)
 mostrar_proyectos2(col2, 2)
 mostrar_proyecto_final(col2, 2)
-mostrar_proyecto_final_seleccion(col2, 2)
+
 
 # ---------------------------------
 # DEBUG
