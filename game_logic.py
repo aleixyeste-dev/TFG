@@ -10,12 +10,8 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 IMG_DIR = os.path.join(BASE_DIR, "imagenes")
 
 
-FUSIONES_PAQUETES = fusiones.FUSIONES_PAQUETES
-# Normaliza a int SIEMPRE (claves y valores)
-FUSIONES_PAQUETES = {
-    int(pid): [int(x) for x in req]
-    for pid, req in FUSIONES_PAQUETES.items()
-}
+FUSIONES_PAQUETES = _normalizar_fusiones(fusiones.FUSIONES_PAQUETES)
+
 
 # ==============================
 # Utilidades
@@ -323,15 +319,8 @@ def extraer_id_actividad(ruta):
     return int(nombre.replace(".jpg", ""))
 
 def extraer_id(ruta):
-    """
-    Extrae el ID numérico desde una ruta de imagen.
-    Ejemplo:
-    imagenes/Proyectos/1/Entregables/Paquete trabajo/24.jpg -> 24
-    """
-    try:
-        return int(os.path.splitext(os.path.basename(ruta))[0])
-    except Exception:
-        return None
+    return _extraer_id_carta(ruta)
+
 
 
 from entregables import ENTREGABLES
@@ -571,14 +560,33 @@ import copy
 import os, re
 
 def _extraer_id_carta(x):
-    """Devuelve el número de una carta/imagen (acepta ruta completa o '79.jpg')."""
     if x is None:
         return None
     s = str(x)
-    base = os.path.basename(s)      # "79.jpg"
-    m = re.search(r"(\d+)", base)
+    base = os.path.basename(s)          # "85.jpg" aunque venga ruta completa
+    m = re.search(r"(\d+)", base)       # pilla el número
     return int(m.group(1)) if m else None
 
+
+def _normalizar_fusiones(raw_fusiones: dict) -> dict:
+    """
+    Convierte cualquier formato de fusiones (ints, '79', '79.jpg', rutas...)
+    a: {paquete_id:int -> [ids:int, ...]}
+    """
+    out = {}
+    for pid, req in raw_fusiones.items():
+        pid_int = int(_extraer_id_carta(pid) if _extraer_id_carta(pid) is not None else pid)
+        ids = []
+        for r in req:
+            cid = _extraer_id_carta(r)
+            if cid is None:
+                try:
+                    cid = int(r)
+                except Exception:
+                    continue
+            ids.append(cid)
+        out[pid_int] = ids
+    return out
 
 
 

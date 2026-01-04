@@ -216,6 +216,7 @@ def mostrar_fusiones(col, equipo):
 
             if ok:
                 st.session_state.estado = nuevo_estado
+                guardar_partida(CODIGO, nuevo_estado)
                 st.session_state[clear_key] = True  # se limpia en el rerun
                 st.success(msg)
                 st.rerun()
