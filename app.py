@@ -189,11 +189,10 @@ def mostrar_fusiones(col, equipo):
         sel_key = f"sel_fusion_{equipo}"
         clear_key = f"clear_sel_{equipo}"
 
-        # 1) Inicializa la bandera
         if clear_key not in st.session_state:
             st.session_state[clear_key] = False
 
-        # 2) Si venimos de una fusión correcta, limpiamos ANTES de crear el multiselect
+        # Limpieza ANTES de crear el widget
         if st.session_state[clear_key]:
             st.session_state[sel_key] = []
             st.session_state[clear_key] = False
@@ -203,7 +202,6 @@ def mostrar_fusiones(col, equipo):
             st.info("No hay actividades para fusionar")
             return
 
-        # 3) Importante: multiselect sin default
         st.multiselect(
             "Selecciona las actividades a fusionar",
             options=actividades,
@@ -218,11 +216,7 @@ def mostrar_fusiones(col, equipo):
 
             if ok:
                 st.session_state.estado = nuevo_estado
-
-                # 4) No limpies aquí sel_key directamente (da el error).
-                # En vez de eso, marca bandera y rerun.
-                st.session_state[clear_key] = True
-
+                st.session_state[clear_key] = True  # se limpia en el rerun
                 st.success(msg)
                 st.rerun()
             else:
