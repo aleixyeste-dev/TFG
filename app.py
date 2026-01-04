@@ -16,6 +16,7 @@ from game_logic import (
     proyectos_disponibles,
     proyecto_asignado,
     ruta_paquete,
+    _normalizar_fusiones
 
     cargar_partida,
     guardar_partida,
