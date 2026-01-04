@@ -2,7 +2,6 @@ import copy
 import os
 import random
 import re
-
 import fusiones
 
 
@@ -13,6 +12,16 @@ IMG_DIR = os.path.join(BASE_DIR, "imagenes")
 # ==============================
 # Utilidades
 # ==============================
+def _extraer_id_carta(x):
+    if x is None:
+        return None
+    s = str(x)
+    base = os.path.basename(s)          # "85.jpg" aunque venga ruta completa
+    m = re.search(r"(\d+)", base)       # pilla el número
+    return int(m.group(1)) if m else None
+
+
+
 def _normalizar_fusiones(raw_fusiones: dict) -> dict:
     """
     Convierte cualquier formato de fusiones (ints, '79', '79.jpg', rutas...)
@@ -569,20 +578,6 @@ def crear_partida_si_no_existe(codigo: str) -> Dict[str, Any]:
 
 def existe_partida(codigo: str) -> bool:
     return _path_partida(codigo.strip().upper()).exists()
-
-
-import copy
-
-import os, re
-
-def _extraer_id_carta(x):
-    if x is None:
-        return None
-    s = str(x)
-    base = os.path.basename(s)          # "85.jpg" aunque venga ruta completa
-    m = re.search(r"(\d+)", base)       # pilla el número
-    return int(m.group(1)) if m else None
-
 
 
 
