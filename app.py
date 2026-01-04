@@ -7,6 +7,7 @@ from game_logic import (
     generar_diccionario_agrupaciones,
     inicializar_juego,
     siguiente_ronda,
+    extraer_id,
 
     ejecutar_fusion_con_seleccion,
     ejecutar_entregable,
