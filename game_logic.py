@@ -210,10 +210,14 @@ def proyecto_asignado(estado, equipo):
 
 def ruta_paquete(paquete_id, proyecto_id):
     return os.path.join(
-        IMG_DIR, "Proyectos", str(proyecto_id),
-        "Entregables", "Paquete trabajo",
-        f"{int(paquete_id)}.jpg"
+        IMG_DIR,
+        "Proyectos",
+        str(proyecto_id),
+        "Entregables",
+        "Paquete trabajo",
+        f"{paquete_id}.jpg",   # ✅ no "paquete_{id}.jpg"
     )
+
 
 
 
@@ -260,22 +264,18 @@ def ejecutar_fusion(estado, equipo, paquete_id):
     paquete_id = int(paquete_id)
 
     actividades_necesarias = FUSIONES_PAQUETES[paquete_id]
-    ids_necesarios = {extraer_id(x) for x in actividades_necesarias}
 
     # eliminar actividades usadas
     nuevo_estado["mazos"][equipo] = [
         c for c in nuevo_estado["mazos"][equipo]
-        if extraer_id(c) not in ids_necesarios
+        if extraer_id(c) not in actividades_necesarias
     ]
-
-    # (esto lo puedes dejar aunque no lo uses)
-    proyecto_id = proyecto_asignado(estado, equipo)
 
     # Asegurar estructura
     nuevo_estado.setdefault("proyectos", {})
     nuevo_estado["proyectos"].setdefault(equipo, [])
 
-    # Guardar el ID del paquete
+    # Guardar el ID del paquete (NO la ruta)
     if paquete_id not in nuevo_estado["proyectos"][equipo]:
         nuevo_estado["proyectos"][equipo].append(paquete_id)
 
