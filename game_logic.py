@@ -263,23 +263,22 @@ def ejecutar_fusion(estado, equipo, paquete_id):
     equipo = str(equipo)
     paquete_id = int(paquete_id)
 
-    actividades_necesarias = FUSIONES_PAQUETES[paquete_id]
+    # fuerza ints
+    actividades_necesarias = [int(x) for x in FUSIONES_PAQUETES[paquete_id]]
 
-    # eliminar actividades usadas
     nuevo_estado["mazos"][equipo] = [
         c for c in nuevo_estado["mazos"][equipo]
         if extraer_id(c) not in actividades_necesarias
     ]
 
-    # Asegurar estructura
     nuevo_estado.setdefault("proyectos", {})
     nuevo_estado["proyectos"].setdefault(equipo, [])
 
-    # Guardar el ID del paquete (NO la ruta)
     if paquete_id not in nuevo_estado["proyectos"][equipo]:
         nuevo_estado["proyectos"][equipo].append(paquete_id)
 
     return nuevo_estado, True
+
 
 
 
@@ -553,42 +552,38 @@ def _extraer_id_carta(x):
 
 
 
-def ejecutar_fusion_con_seleccion(estado, equipo, seleccion):
-    # Normaliza a ids
-    ids = []
-    for item in (seleccion or []):
-        cid = _extraer_id_carta(item)
-        if cid is not None:
-            ids.append(cid)
+def ruta_paquete(paquete_id, proyecto_id):
+    return os.path.join(
+        IMG_DIR,
+        "Proyectos",
+        str(proyecto_id),
+        "Entregables",
+        "Paquete trabajo",
+        f"{paquete_id}.jpg",   # ✅ no "paquete_{id}.jpg"
+    )
 
-    ids_set = set(ids)
 
-    if not ids_set:
-        return estado, False, "No has seleccionado cartas válidas (no pude extraer IDs)."
 
-    # Busca match exacto, pero con feedback
-    mejor_msg = None
 
-    for paquete_id, req in FUSIONES_PAQUETES.items():
-        try:
-            req_set = set(int(r) for r in req)
-        except Exception:
-            req_set = set(req)
+def ejecutar_fusion(estado, equipo, paquete_id):
+    nuevo_estado = copy.deepcopy(estado)
+    equipo = str(equipo)
+    paquete_id = int(paquete_id)
 
-        if ids_set == req_set:
-            nuevo_estado, ok = ejecutar_fusion(estado, equipo, int(paquete_id))
-            if ok:
-                return nuevo_estado, True, f"Fusión correcta → Paquete {paquete_id} creado."
-            return estado, False, "Encontré la fusión, pero ejecutar_fusion devolvió False."
+    actividades_necesarias = FUSIONES_PAQUETES[paquete_id]
 
-        # diagnóstico: qué falta y qué sobra respecto a esta fusión
-        faltan = sorted(req_set - ids_set)
-        sobran = sorted(ids_set - req_set)
+    # eliminar actividades usadas
+    nuevo_estado["mazos"][equipo] = [
+        c for c in nuevo_estado["mazos"][equipo]
+        if extraer_id(c) not in actividades_necesarias
+    ]
 
-        # qué fusión está "más cerca" (menos diferencias)
-        score = len(faltan) + len(sobran)
-        msg = f"No coincide con Paquete {paquete_id}. Faltan: {faltan} | Sobran: {sobran}"
-        if mejor_msg is None or score < mejor_msg[0]:
-            mejor_msg = (score, msg)
+    # Asegurar estructura
+    nuevo_estado.setdefault("proyectos", {})
+    nuevo_estado["proyectos"].setdefault(equipo, [])
 
-    return estado, False, mejor_msg[1] if mejor_msg else "La selección no corresponde a ninguna fusión válida."
+    # Guardar el ID del paquete (NO la ruta)
+    if paquete_id not in nuevo_estado["proyectos"][equipo]:
+        nuevo_estado["proyectos"][equipo].append(paquete_id)
+
+    return nuevo_estado, True
