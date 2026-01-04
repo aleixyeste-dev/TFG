@@ -10,12 +10,28 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 IMG_DIR = os.path.join(BASE_DIR, "imagenes")
 
 
-FUSIONES_PAQUETES = _normalizar_fusiones(fusiones.FUSIONES_PAQUETES)
-
-
 # ==============================
 # Utilidades
 # ==============================
+def _normalizar_fusiones(raw_fusiones: dict) -> dict:
+    """
+    Convierte cualquier formato de fusiones (ints, '79', '79.jpg', rutas...)
+    a: {paquete_id:int -> [ids:int, ...]}
+    """
+    out = {}
+    for pid, req in raw_fusiones.items():
+        pid_int = int(_extraer_id_carta(pid) if _extraer_id_carta(pid) is not None else pid)
+        ids = []
+        for r in req:
+            cid = _extraer_id_carta(r)
+            if cid is None:
+                try:
+                    cid = int(r)
+                except Exception:
+                    continue
+            ids.append(cid)
+        out[pid_int] = ids
+    return out
 
 def natural_key(text):
     return [int(c) if c.isdigit() else c for c in re.split(r"(\d+)", text)]
@@ -56,7 +72,7 @@ def cargar_proyectos_desde_txt():
 
 
 PROYECTOS = cargar_proyectos_desde_txt()
-
+FUSIONES_PAQUETES = _normalizar_fusiones(fusiones.FUSIONES_PAQUETES)
 
 # ==============================
 # Inicialización
@@ -567,26 +583,6 @@ def _extraer_id_carta(x):
     m = re.search(r"(\d+)", base)       # pilla el número
     return int(m.group(1)) if m else None
 
-
-def _normalizar_fusiones(raw_fusiones: dict) -> dict:
-    """
-    Convierte cualquier formato de fusiones (ints, '79', '79.jpg', rutas...)
-    a: {paquete_id:int -> [ids:int, ...]}
-    """
-    out = {}
-    for pid, req in raw_fusiones.items():
-        pid_int = int(_extraer_id_carta(pid) if _extraer_id_carta(pid) is not None else pid)
-        ids = []
-        for r in req:
-            cid = _extraer_id_carta(r)
-            if cid is None:
-                try:
-                    cid = int(r)
-                except Exception:
-                    continue
-            ids.append(cid)
-        out[pid_int] = ids
-    return out
 
 
 
