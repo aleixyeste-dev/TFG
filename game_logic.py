@@ -52,6 +52,7 @@ def normalizar_estado(estado):
     estado.setdefault("mazos", {"1": [], "2": []})
     estado.setdefault("proyectos", {})
     estado.setdefault("proyectos_asignados", {})
+    estado.setdefault("entregables", {"1": [], "2": []})
     estado.setdefault("finalizado", False)
 
     # ✅ Migración: convertir proyectos a IDs int (por si hay rutas antiguas)
@@ -636,4 +637,66 @@ def ejecutar_fusion_con_seleccion(estado, equipo, seleccion):
             mejor = (score, msg)
 
     return estado, False, mejor[1] if mejor else "La selección no corresponde a ninguna fusión válida."
+
+
+
+
+import os
+import re
+
+def _extraer_id_paquete(x):
+    """Extrae ID de paquete desde int, '12.jpg' o ruta completa."""
+    if x is None:
+        return None
+    if isinstance(x, int):
+        return x
+    s = str(x)
+    base = os.path.basename(s)          # "12.jpg"
+    m = re.search(r"(\d+)", base)
+    return int(m.group(1)) if m else None
+
+
+def ejecutar_entregable_con_seleccion(estado, equipo, seleccion_paquetes):
+    """
+    seleccion_paquetes: lista de ints o strings/rutas.
+    Devuelve SIEMPRE: (nuevo_estado, ok, msg)
+    """
+    equipo = str(equipo)
+
+    # Normaliza a IDs
+    ids = []
+    for item in (seleccion_paquetes or []):
+        pid = _extraer_id_paquete(item)
+        if pid is not None:
+            ids.append(pid)
+
+    ids_set = set(ids)
+    if not ids_set:
+        return estado, False, "No has seleccionado paquetes válidos (no pude extraer IDs)."
+
+    mejor_msg = None
+
+    # Match exacto con los requisitos de ENTREGABLES
+    for entregable_id, req in ENTREGABLES.items():
+        try:
+            req_set = set(int(x) for x in req)
+        except Exception:
+            req_set = set(req)
+
+        if ids_set == req_set:
+            # Reutiliza tu lógica real (la que elimina paquetes y añade entregable)
+            nuevo_estado, ok = ejecutar_entregable(estado, equipo, int(entregable_id))
+            if ok:
+                return nuevo_estado, True, f"Entregable {entregable_id} creado."
+            return estado, False, "Encontré el entregable, pero ejecutar_entregable devolvió False."
+
+        # Diagnóstico (para mensajes como en fusiones)
+        faltan = sorted(req_set - ids_set)
+        sobran = sorted(ids_set - req_set)
+        score = len(faltan) + len(sobran)
+        msg = f"No coincide con Entregable {entregable_id}. Faltan: {faltan} | Sobran: {sobran}"
+        if mejor_msg is None or score < mejor_msg[0]:
+            mejor_msg = (score, msg)
+
+    return estado, False, mejor_msg[1] if mejor_msg else "La selección no corresponde a ningún entregable válido."
 

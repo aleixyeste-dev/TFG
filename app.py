@@ -12,6 +12,8 @@ from game_logic import (
     ejecutar_fusion_con_seleccion,
     ejecutar_entregable,
     ejecutar_proyecto,
+    ejecutar_entregable_con_seleccion,
+
 
     entregables_disponibles,
     proyectos_disponibles,
@@ -365,6 +367,46 @@ def mostrar_proyecto_final(col, equipo):
             
 
 
+def mostrar_entregables_seleccion(col, equipo):
+    with col:
+        st.subheader("Entregables (selecciona paquetes)")
+
+        equipo = str(equipo)
+        sel_key = f"sel_ent_{equipo}"
+        clear_key = f"clear_ent_{equipo}"
+
+        if clear_key not in st.session_state:
+            st.session_state[clear_key] = False
+
+        # Limpieza diferida (evita StreamlitAPIException)
+        if st.session_state[clear_key]:
+            st.session_state[sel_key] = []
+            st.session_state[clear_key] = False
+
+        paquetes = estado.get("proyectos", {}).get(equipo, [])
+        if not paquetes:
+            st.info("No hay paquetes completados para crear entregables")
+            return
+
+        st.multiselect(
+            "Selecciona los paquetes a fusionar",
+            options=paquetes,  # aquí son ints (IDs)
+            format_func=lambda p: f"Paquete {p}",
+            key=sel_key
+        )
+
+        seleccion = st.session_state.get(sel_key, [])
+
+        if st.button("Crear entregable", key=f"btn_ent_sel_{equipo}"):
+            nuevo_estado, ok, msg = ejecutar_entregable_con_seleccion(estado, equipo, seleccion)
+
+            if ok:
+                st.session_state.estado = nuevo_estado
+                st.session_state[clear_key] = True
+                st.success(msg)
+                st.rerun()
+            else:
+                st.warning(msg)
 
 
 
@@ -376,6 +418,7 @@ mostrar_fusiones(col1, 1)
 mostrar_proyectos(col1, 1)
 mostrar_entregables(col1, 1)
 mostrar_entregables_creados(col1, 1)
+mostrar_entregables_seleccion(col1, 1)
 mostrar_proyectos2(col1, 1)
 mostrar_proyecto_final(col1, 1)
 
@@ -384,6 +427,7 @@ mostrar_fusiones(col2, 2)
 mostrar_proyectos(col2, 2)
 mostrar_entregables(col2, 2)
 mostrar_entregables_creados(col2, 2)
+mostrar_entregables_seleccion(col1, 1)
 mostrar_proyectos2(col2, 2)
 mostrar_proyecto_final(col2, 2)
 
