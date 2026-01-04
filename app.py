@@ -427,7 +427,7 @@ mostrar_fusiones(col2, 2)
 mostrar_proyectos(col2, 2)
 mostrar_entregables(col2, 2)
 mostrar_entregables_creados(col2, 2)
-mostrar_entregables_seleccion(col1, 1)
+mostrar_entregables_seleccion(col2, 1)
 mostrar_proyectos2(col2, 2)
 mostrar_proyecto_final(col2, 2)
 
