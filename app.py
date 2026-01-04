@@ -241,20 +241,31 @@ def mostrar_proyectos(col, equipo):
             return
 
         proyecto_id = proyecto_asignado(estado, equipo)
-        if not proyecto_id:
-            st.error("No hay proyecto asignado a este equipo (proyecto_id es None).")
+
+        # proyecto_id puede venir como str "6" → lo convertimos una vez
+        try:
+            proyecto_id = int(proyecto_id)
+        except Exception:
+            st.error(f"Proyecto asignado inválido: {proyecto_id}")
             return
 
-        for pid in paquetes_ids:
-            ruta = ruta_paquete(int(pid), int(proyecto_id))
+        for x in paquetes_ids:
+            # x puede ser int, "15", "15.jpg" o ruta completa
+            if isinstance(x, int):
+                pid = x
+            else:
+                pid = extraer_id(x)  # usa tu función que saca el número del basename
+            if pid is None:
+                st.warning(f"No pude interpretar este paquete: {x}")
+                continue
 
-            # DEBUG útil (puedes quitarlo luego):
-            # st.write("DEBUG ruta paquete:", ruta)
+            ruta = ruta_paquete(pid, proyecto_id)
 
             if os.path.exists(ruta):
                 st.image(ruta, width=180)
             else:
                 st.error(f"Imagen no encontrada: {ruta}")
+
 
 
 
