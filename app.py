@@ -13,6 +13,7 @@ from game_logic import (
     ejecutar_entregable,
     ejecutar_proyecto,
     ejecutar_entregable_con_seleccion,
+    ejecutar_proyecto_con_seleccion,
 
 
     entregables_disponibles,
@@ -408,6 +409,46 @@ def mostrar_entregables_seleccion(col, equipo):
             else:
                 st.warning(msg)
 
+def mostrar_proyecto_final_seleccion(col, equipo):
+    with col:
+        st.subheader("Proyecto final (selecciona entregables)")
+
+        equipo = str(equipo)
+        sel_key = f"sel_proyecto_{equipo}"
+        clear_key = f"clear_proyecto_{equipo}"
+
+        if clear_key not in st.session_state:
+            st.session_state[clear_key] = False
+
+        # limpiar ANTES del widget (para evitar el error de Streamlit)
+        if st.session_state[clear_key]:
+            st.session_state[sel_key] = []
+            st.session_state[clear_key] = False
+
+        entregs = estado.get("entregables", {}).get(equipo, [])
+        if not entregs:
+            st.info("No hay entregables para crear el proyecto")
+            return
+
+        st.multiselect(
+            "Selecciona los entregables a fusionar",
+            options=entregs,
+            format_func=lambda r: os.path.basename(str(r)),
+            key=sel_key
+        )
+
+        seleccion = st.session_state.get(sel_key, [])
+
+        if st.button("Crear proyecto", key=f"btn_proyecto_sel_{equipo}"):
+            nuevo_estado, ok, msg = ejecutar_proyecto_con_seleccion(estado, equipo, seleccion)
+
+            if ok:
+                st.session_state.estado = nuevo_estado
+                st.session_state[clear_key] = True
+                st.success(msg)
+                st.rerun()
+            else:
+                st.warning(msg)
 
 
 
@@ -421,15 +462,17 @@ mostrar_entregables_creados(col1, 1)
 mostrar_entregables_seleccion(col1, 1)
 mostrar_proyectos2(col1, 1)
 mostrar_proyecto_final(col1, 1)
+mostrar_proyecto_final_seleccion(col1, 1)
 
 mostrar_equipo(col2, 2)
 mostrar_fusiones(col2, 2)
 mostrar_proyectos(col2, 2)
 mostrar_entregables(col2, 2)
 mostrar_entregables_creados(col2, 2)
-mostrar_entregables_seleccion(col2, 1)
+mostrar_entregables_seleccion(col2, 2)
 mostrar_proyectos2(col2, 2)
 mostrar_proyecto_final(col2, 2)
+mostrar_proyecto_final_seleccion(col2, 2)
 
 # ---------------------------------
 # DEBUG

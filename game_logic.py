@@ -700,3 +700,86 @@ def ejecutar_entregable_con_seleccion(estado, equipo, seleccion_paquetes):
 
     return estado, False, mejor_msg[1] if mejor_msg else "La selección no corresponde a ningún entregable válido."
 
+
+import copy
+import os
+import re
+
+# Reutiliza tu extractor general (si ya tienes _extraer_id_carta, no lo dupliques)
+def _extraer_id_item(x):
+    """Acepta int, '55.jpg' o ruta completa y devuelve 55."""
+    if x is None:
+        return None
+    if isinstance(x, int):
+        return x
+    s = str(x)
+    base = os.path.basename(s)
+    m = re.search(r"(\d+)", base)
+    return int(m.group(1)) if m else None
+
+
+def ejecutar_proyecto_con_seleccion(estado, equipo, seleccion):
+    """
+    Selecciona entregables para completar el PROYECTO ASIGNADO a ese equipo.
+    Devuelve SIEMPRE: (nuevo_estado, ok, msg)
+    """
+    equipo = str(equipo)
+
+    # 1) ¿Qué proyecto tiene asignado este equipo?
+    proyecto_id = estado.get("proyectos_asignados", {}).get(equipo)
+    if proyecto_id is None:
+        return estado, False, "Este equipo no tiene proyecto asignado."
+
+    try:
+        proyecto_id = int(proyecto_id)
+    except Exception:
+        return estado, False, f"proyecto_asignado inválido: {proyecto_id}"
+
+    # 2) Requisitos (entregables necesarios para ese proyecto)
+    if proyecto_id not in PROYECTOS:
+        return estado, False, f"No existe el proyecto {proyecto_id} en PROYECTOS."
+
+    req_set = set(int(x) for x in PROYECTOS[proyecto_id])
+
+    # 3) Normaliza selección a ids
+    ids = []
+    for item in (seleccion or []):
+        cid = _extraer_id_item(item)
+        if cid is not None:
+            ids.append(cid)
+
+    ids_set = set(ids)
+    if not ids_set:
+        return estado, False, "No has seleccionado entregables válidos (no pude extraer IDs)."
+
+    # 4) Validación exacta + diagnóstico
+    if ids_set != req_set:
+        faltan = sorted(req_set - ids_set)
+        sobran = sorted(ids_set - req_set)
+        return estado, False, f"No coincide con el proyecto {proyecto_id}. Faltan: {faltan} | Sobran: {sobran}"
+
+    # 5) OK -> actualiza estado: elimina entregables usados + guarda proyecto final + finaliza partida
+    nuevo = copy.deepcopy(estado)
+    nuevo.setdefault("entregables", {})
+    nuevo["entregables"].setdefault(equipo, [])
+
+    def to_id(x):
+        cid = _extraer_id_item(x)
+        return cid
+
+    nuevo["entregables"][equipo] = [
+        x for x in nuevo["entregables"][equipo]
+        if to_id(x) not in req_set
+    ]
+
+    nuevo.setdefault("proyectos_finales", {})
+    nuevo["proyectos_finales"].setdefault(equipo, [])
+    if proyecto_id not in nuevo["proyectos_finales"][equipo]:
+        nuevo["proyectos_finales"][equipo].append(proyecto_id)
+
+    # Si quieres que al completar el primer proyecto se acabe la partida:
+    nuevo["finalizado"] = True
+    nuevo["ganador"] = equipo
+
+    return nuevo, True, f"✅ Proyecto {proyecto_id} completado. ¡Gana el equipo {equipo}!"
+
