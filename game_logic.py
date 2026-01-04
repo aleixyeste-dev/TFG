@@ -3,55 +3,106 @@ import os
 import random
 import re
 
+import fusiones
+
+
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 IMG_DIR = os.path.join(BASE_DIR, "imagenes")
 
-try:
-    import fusiones
-    FUSIONES_PAQUETES = fusiones.FUSIONES_PAQUETES
-except Exception as e:
-    FUSIONES_PAQUETES = {}
-    print("ERROR: no se pudo cargar 'fusiones.py' o FUSIONES_PAQUETES:", e)
+
+FUSIONES_PAQUETES = fusiones.FUSIONES_PAQUETES
+# ==============================
+# Utilidades
+# ==============================
 
 def natural_key(text):
     return [int(c) if c.isdigit() else c for c in re.split(r"(\d+)", text)]
+
 
 def normalizar_estado(estado):
     estado.setdefault("ronda", 0)
     estado.setdefault("historial", [])
     estado.setdefault("mazos", {"1": [], "2": []})
-    estado.setdefault("proyectos", {})
+    estado.setdefault("proyectos", {})  # paquetes completados por equipo
     estado.setdefault("proyectos_asignados", {})
     estado.setdefault("finalizado", False)
     return estado
 
+
+
 def cargar_proyectos_desde_txt():
     proyectos = {}
-    ruta_txt = os.path.join(BASE_DIR, "relacionesproyectos.txt")
-    with open(ruta_txt, "r", encoding="utf-8") as f:
+
+    with open("relacionesproyectos.txt", "r", encoding="utf-8") as f:
         for linea in f:
             linea = linea.strip()
             if not linea or ":" not in linea:
                 continue
 
-            izquierda, derecha = linea.split(":", 1)
+            izquierda, derecha = linea.split(":")
+
+            # "Proyecto 1" -> 1
             proyecto_id = int(izquierda.replace("Proyecto", "").strip())
+
             entregables = [int(x.strip()) for x in derecha.split(",")]
+
             proyectos[proyecto_id] = entregables
 
     return proyectos
 
-PROYECTOS = None
 
-def get_proyectos():
-    global PROYECTOS
-    if PROYECTOS is None:
-        try:
-            PROYECTOS = cargar_proyectos_desde_txt()
-        except Exception as e:
-            PROYECTOS = {}
-            print("ERROR cargando relacionesproyectos.txt:", e)
-    return PROYECTOS
+
+
+PROYECTOS = cargar_proyectos_desde_txt()
+
+
+# ==============================
+# Inicialización
+# ==============================
+
+def inicializar_juego():
+    return {
+        "ronda": 0,
+        "historial": [],
+        "mazos": {"1": [], "2": []},
+        "proyectos": {},
+        "proyectos_asignados": {},
+        "finalizado": False,
+    }
+
+
+# ==============================
+# Carga estructura
+# ==============================
+
+def cargar_estructura_proyecto():
+    base_path = os.path.join(IMG_DIR, "Proyectos")
+
+    if not os.path.exists(base_path):
+        raise RuntimeError(f"No existe la ruta {base_path}")
+
+    estructura = {}
+    for pid in sorted(os.listdir(base_path)):
+        ruta_proyecto = os.path.join(base_path, pid)
+        if not os.path.isdir(ruta_proyecto):
+            continue
+
+        actividades = []
+        ruta_actividades = os.path.join(
+            ruta_proyecto, "Entregables", "Paquete trabajo", "Actividades"
+        )
+
+        if os.path.exists(ruta_actividades):
+            for f in os.listdir(ruta_actividades):
+                if f.lower().endswith(".jpg"):
+                    actividades.append(os.path.join(ruta_actividades, f))
+
+        estructura[pid] = {
+            "actividades": actividades
+        }
+
+    return estructura
+
 
 
 # ==============================
@@ -514,25 +565,27 @@ def ruta_paquete(paquete_id, proyecto_id):
 
 
 
-def ejecutar_fusion(estado, equipo, paquete_id):
-    nuevo_estado = copy.deepcopy(estado)
-    equipo = str(equipo)
-    paquete_id = int(paquete_id)
+def ejecutar_fusion_con_seleccion(estado, equipo, seleccion):
+    # Normaliza a ids usando extraer_id (sirve para rutas completas y "55.jpg")
+    ids = []
+    for item in (seleccion or []):
+        cid = extraer_id(item)
+        if cid is not None:
+            ids.append(int(cid))
 
-    actividades_necesarias = FUSIONES_PAQUETES[paquete_id]
+    ids_set = set(ids)
 
-    # eliminar actividades usadas
-    nuevo_estado["mazos"][equipo] = [
-        c for c in nuevo_estado["mazos"][equipo]
-        if extraer_id(c) not in actividades_necesarias
-    ]
+    if not ids_set:
+        return estado, False, "No has seleccionado cartas válidas (no pude extraer IDs)."
 
-    # Asegurar estructura
-    nuevo_estado.setdefault("proyectos", {})
-    nuevo_estado["proyectos"].setdefault(equipo, [])
+    # Busca match exacto
+    for paquete_id, req in FUSIONES_PAQUETES.items():
+        req_set = set(int(r) for r in req)  # fuerza ints SIEMPRE
 
-    # Guardar el ID del paquete (NO la ruta)
-    if paquete_id not in nuevo_estado["proyectos"][equipo]:
-        nuevo_estado["proyectos"][equipo].append(paquete_id)
+        if ids_set == req_set:
+            nuevo_estado, ok = ejecutar_fusion(estado, equipo, int(paquete_id))
+            if ok:
+                return nuevo_estado, True, f"Fusión correcta → Paquete {paquete_id} creado."
+            return estado, False, "Encontré la fusión, pero ejecutar_fusion devolvió False."
 
-    return nuevo_estado, True
+    return estado, False, "La selección no corresponde a ninguna fusión válida."
