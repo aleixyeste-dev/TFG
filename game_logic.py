@@ -11,6 +11,12 @@ IMG_DIR = os.path.join(BASE_DIR, "imagenes")
 
 
 FUSIONES_PAQUETES = fusiones.FUSIONES_PAQUETES
+# Normaliza a int SIEMPRE (claves y valores)
+FUSIONES_PAQUETES = {
+    int(pid): [int(x) for x in req]
+    for pid, req in FUSIONES_PAQUETES.items()
+}
+
 # ==============================
 # Utilidades
 # ==============================
@@ -264,12 +270,15 @@ def ejecutar_fusion(estado, equipo, paquete_id):
     paquete_id = int(paquete_id)
 
     # fuerza ints
-    actividades_necesarias = [int(x) for x in FUSIONES_PAQUETES[paquete_id]]
+    actividades_necesarias = set(FUSIONES_PAQUETES[paquete_id])  # set de ints
 
+
+    nuevo_estado["mazos"].setdefault(equipo, [])
     nuevo_estado["mazos"][equipo] = [
         c for c in nuevo_estado["mazos"][equipo]
         if extraer_id(c) not in actividades_necesarias
     ]
+
 
     nuevo_estado.setdefault("proyectos", {})
     nuevo_estado["proyectos"].setdefault(equipo, [])
