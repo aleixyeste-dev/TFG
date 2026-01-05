@@ -8,6 +8,9 @@ from game_logic import (
     inicializar_juego,
     siguiente_ronda,
     extraer_id,
+    listar_proyectos_imagenes,
+    catalogo_actividades_proyecto,
+    FUSIONES_PAQUETES,
 
     ejecutar_fusion_con_seleccion,
     ejecutar_entregable,
@@ -103,6 +106,81 @@ with st.sidebar:
             st.success(f"Unido a {codigo} como equipo {equipo}.")
             st.rerun()
 
+    # -------------------------------------------------------
+    # CATÁLOGO (OPCIÓN B): selector de proyecto + cartas + fusiones
+    # -------------------------------------------------------
+    st.divider()
+    ver_catalogo = st.toggle("🗂️ Catálogo de cartas", value=False, key="toggle_catalogo")
+
+    if ver_catalogo:
+        with st.expander("📚 Catálogo (por proyecto)", expanded=True):
+            proyectos = listar_proyectos_imagenes()
+            if not proyectos:
+                st.error("No se encontraron proyectos en imagenes/Proyectos/")
+            else:
+                proyecto_sel = st.selectbox("Proyecto", proyectos, key="cat_proyecto")
+
+                filtro = st.text_input(
+                    "Filtrar por número (opcional)",
+                    "",
+                    key="cat_filtro",
+                    placeholder="Ej: 79",
+                ).strip()
+
+                catalogo = catalogo_actividades_proyecto(proyecto_sel)  # {id:int -> ruta:str}
+                ids = list(catalogo.keys())
+
+                if filtro:
+                    ids = [i for i in ids if filtro in str(i)]
+
+                st.caption(f"{len(ids)} cartas")
+
+                # Grid 3 columnas (sidebar)
+                cols = st.columns(3)
+                for idx, cid in enumerate(ids):
+                    with cols[idx % 3]:
+                        ruta = catalogo.get(cid)
+                        if ruta and os.path.exists(ruta):
+                            st.image(ruta, caption=str(cid), use_container_width=True)
+                        else:
+                            st.write(str(cid))
+
+        with st.expander("🧩 Fusiones → Paquetes", expanded=False):
+            # Si no hay fusiones cargadas (fusiones.py no disponible), avisa
+            if not FUSIONES_PAQUETES:
+                st.warning("No hay fusiones disponibles (FUSIONES_PAQUETES vacío).")
+            else:
+                paquetes = sorted([int(k) for k in FUSIONES_PAQUETES.keys()])
+                paquete_sel = st.selectbox("Ver fusión del paquete", paquetes, key="cat_paquete")
+
+                req = FUSIONES_PAQUETES[int(paquete_sel)]
+                try:
+                    req_ids = [int(x) for x in req]
+                except Exception:
+                    # por si viniera como "79.jpg" o rutas
+                    req_ids = [extraer_id(x) for x in req]
+                    req_ids = [x for x in req_ids if x is not None]
+
+                st.write(f"Requiere: {', '.join(map(str, req_ids)) if req_ids else '(sin datos)'}")
+
+                # Mostrar las 4 cartas si el catálogo está cargado
+                # Si el usuario no abrió el expander anterior, volvemos a cargar el catálogo
+                if "cat_proyecto" in st.session_state:
+                    proyecto_sel = st.session_state["cat_proyecto"]
+                    catalogo = catalogo_actividades_proyecto(proyecto_sel)
+                else:
+                    catalogo = {}
+
+                if req_ids:
+                    cols2 = st.columns(min(4, len(req_ids)))
+                    for j, rid in enumerate(req_ids):
+                        with cols2[j % len(cols2)]:
+                            ruta = catalogo.get(int(rid))
+                            if ruta and os.path.exists(ruta):
+                                st.image(ruta, caption=str(rid), use_container_width=True)
+                            else:
+                                st.write(str(rid))
+
 # ---------------------------------
 # SI NO HAY CÓDIGO, PARAMOS AQUÍ (PERO LA SIDEBAR YA EXISTE)
 # ---------------------------------
@@ -121,13 +199,11 @@ if estado is None:
 
 bloquear_si_finalizado(estado)
 
-
-
 # ---------------------------------
 # CONFIGURACIÓN
 # ---------------------------------
-
 st.title("🧠 BIVRA - Partida compartida")
+
 
 
 # ---------------------------------

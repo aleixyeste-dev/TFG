@@ -783,3 +783,43 @@ def ejecutar_proyecto_con_seleccion(estado, equipo, seleccion):
 
     return nuevo, True, f"✅ Proyecto {proyecto_id} completado. ¡Gana el equipo {equipo}!"
 
+def listar_proyectos_imagenes():
+    """Devuelve [1,2,3,...] según las carpetas en imagenes/Proyectos/"""
+    base = os.path.join(IMG_DIR, "Proyectos")
+    if not os.path.exists(base):
+        return []
+    out = []
+    for d in os.listdir(base):
+        p = os.path.join(base, d)
+        if os.path.isdir(p):
+            try:
+                out.append(int(d))
+            except Exception:
+                pass
+    return sorted(out)
+
+
+def catalogo_actividades_proyecto(proyecto_id):
+    """
+    Devuelve dict {id:int -> ruta:str} para Actividades del proyecto seleccionado.
+    """
+    ruta_acts = os.path.join(
+        IMG_DIR,
+        "Proyectos",
+        str(proyecto_id),
+        "Entregables",
+        "Paquete trabajo",
+        "Actividades",
+    )
+    catalogo = {}
+    if not os.path.exists(ruta_acts):
+        return catalogo
+
+    for f in os.listdir(ruta_acts):
+        if f.lower().endswith(".jpg"):
+            ruta = os.path.join(ruta_acts, f)
+            cid = extraer_id(ruta)  # usa tu extraer_id() existente
+            if cid is not None:
+                catalogo[int(cid)] = ruta
+
+    return dict(sorted(catalogo.items(), key=lambda kv: kv[0]))
